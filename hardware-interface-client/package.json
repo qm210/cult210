@@ -1,0 +1,24 @@
+{
+  "name": "hardware-interface-client",
+  "version": "1.0.0",
+  "description": "hardware interface client for the CULT210 midi synthesizer jam tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qm210/cult210.git"
+  },
+  "author": "Alexander Kraus <nr4@z10.info>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/qm210/cult210/issues"
+  },
+  "homepage": "https://github.com/qm210/cult210#readme",
+  "dependencies": {
+    "midi": "^1.0.0",
+    "midi-file": "^1.1.2",
+    "websocket": "^1.0.31"
+  }
+}
