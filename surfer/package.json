@@ -1,0 +1,14 @@
+{
+  "name": "surfer",
+  "version": "1.0.0",
+  "description": "server for the CULT210 midi synthesizer jam tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dr. QM <qm@z10.info>",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "websocket": "^1.0.31"
+  }
+}
