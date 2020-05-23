@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/qm210/cult210#readme",
   "dependencies": {
-    "midi": "^1.0.0"
+    "midi": "^1.0.0",
+    "midi-file": "^1.1.2",
+    "websocket": "^1.0.31"
   }
 }
