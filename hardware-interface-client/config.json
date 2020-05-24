@@ -1,11 +1,10 @@
 {
     "server":
     {
-        "address": "http://localhost:8080"
+        "address": "ws://localhost:8080"
     },
     "client":
     {
-        "name": "testclient",
-        "jamName": "nr4Stinkt"
+        "name": "testclient"
     }
 }
