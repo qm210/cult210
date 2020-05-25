@@ -1,0 +1,7 @@
+{
+    "server":
+    {
+        "name": "Team210 test server",
+        "port": 8080
+    }
+}
