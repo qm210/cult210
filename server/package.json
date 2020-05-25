@@ -1,5 +1,5 @@
 {
-  "name": "surfer",
+  "name": "server",
   "version": "0.0.0",
   "description": "server for the CULT210 midi synthesizer jam tool",
   "main": "index.js",
@@ -7,7 +7,7 @@
   "author": "Dr. QM <qm@z10.info>",
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "nodemon ./bin/www"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -16,6 +16,7 @@
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
     "morgan": "~1.9.1",
+    "nodemon": "^2.0.4",
     "websocket": "^1.0.31"
   }
 }
