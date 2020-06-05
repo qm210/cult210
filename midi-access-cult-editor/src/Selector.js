@@ -8,26 +8,23 @@ const Selector = () => {
 
     return <>
         <ul>
-            {
-                tracks.map((track, index) =>
-                    <li key={index}>
-                        <b>{track}</b>:
-                        <div>
-                        {
-                            midiStore[track] ?
-                                midiStore[track].map((midi, mIndex) =>
-                                    <button key={mIndex}
-                                        onClick={() => playMidi(dispatch, midi)}>
-                                        {midi.title}
-                                    </button>
-                                )
-                            :
-                                "empty"
+            {tracks.map((track, index) =>
+                <li key={index}>
+                    <b>{track}</b>:
+                    <div>
+                        {midiStore[track] ?
+                            midiStore[track].map((midi, mIndex) =>
+                                <button key={mIndex}
+                                    onClick={() => playMidi(dispatch, midi)}>
+                                    {midi.title}
+                                </button>
+                            )
+                        :
+                            "empty"
                         }
-                        </div>
-                    </li>
-                )
-            }
+                    </div>
+                </li>
+            )}
         </ul>
     </>
 }

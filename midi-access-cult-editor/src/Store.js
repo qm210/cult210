@@ -7,7 +7,7 @@ const initialState = {
     selected: {
         title: null,
         filename: null,
-        data: []
+        data: {}
     }
 };
 

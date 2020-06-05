@@ -7,7 +7,6 @@ var ac = new AudioContext();
 var Player;
 
 export const playMidi = async (dispatch, midi) => {
-    console.log(midi);
     const res = await fetch(`/midis/${midi.filename}`);
     const blob = await res.blob();
     //download(blob, midi.filename);
@@ -15,7 +14,6 @@ export const playMidi = async (dispatch, midi) => {
     const arrayBuffer = await new Response(blob).arrayBuffer();
     Soundfont.instrument(ac, 'clavinet', { soundfont: 'FluidR3_GM' }).then(instrument => {
         Player = Player || new MidiPlayer.Player(event => {
-            //console.log(event);
             if (event.name === 'Note on' && event.velocity > 0) {
                 instrument.play(event.noteName, ac.currentTime, {gain:event.velocity/100});
             }
