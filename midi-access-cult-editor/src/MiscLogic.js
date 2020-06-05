@@ -1,15 +1,24 @@
 import MidiPlayer from 'midi-player-js';
 import Soundfont from 'soundfont-player';
-import {parseArrayBuffer as midiJsonParse} from 'midi-json-parser';
-import download from 'downloadjs';
+import {Midi} from '@tonejs/midi';
 
 var ac = new AudioContext();
 var Player;
 
 export const playMidi = async (dispatch, midi) => {
-    const res = await fetch(`/midis/${midi.filename}`);
+    const midiUrl = `/midis/${midi.filename}`;
+    const res = await fetch(midiUrl);
     const blob = await res.blob();
-    //download(blob, midi.filename);
+
+    const midiData = await Midi.fromUrl(midiUrl);
+    dispatch({
+        type: "LOAD MIDI",
+        payload: {
+            title: midi.title,
+            filename: midi.filename,
+            data: midiData,
+        }
+    });
 
     const arrayBuffer = await new Response(blob).arrayBuffer();
     Soundfont.instrument(ac, 'clavinet', { soundfont: 'FluidR3_GM' }).then(instrument => {
@@ -21,18 +30,6 @@ export const playMidi = async (dispatch, midi) => {
         Player.stop();
         Player.loadArrayBuffer(arrayBuffer);
         Player.play();
-
-        midiJsonParse(arrayBuffer)
-            .then((json) => {
-                dispatch({
-                    type: "LOAD JSON",
-                    payload: {
-                        title: midi.title,
-                        filename: midi.filename,
-                        json
-                    }
-                });
-            });
     });
 
 }

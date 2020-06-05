@@ -23,14 +23,10 @@ const reducer = (state, action) => {
                 ...state,
                 midiStore: action.payload
             }
-        case "LOAD JSON":
+        case "LOAD MIDI":
             return {
                 ...state,
-                selected: {
-                    title: action.payload.title,
-                    filename: action.payload.filename,
-                    data: action.payload.json
-                }
+                selected: action.payload
             }
         case "RESET":
             return initialState;

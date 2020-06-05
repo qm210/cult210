@@ -1,7 +1,6 @@
 import React from 'react';
 import {useStore} from './Store';
 import styled from 'styled-components';
-import './style/PianoRoll.css'
 
 const BASE_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const isBlack = note => note.includes('#');
@@ -12,11 +11,11 @@ for (let octave = -1; octave < 10; octave++) {
 }
 
 const geometry = {
-    pianoWidth: 25,
-    barWidth: 35,
+    pianoWidth: 27,
+    barWidth: 60,
     pianoHeight: 7,
-    totalHeight: (7 + 3) * NOTES.length,
 };
+geometry.totalHeight = (geometry.pianoHeight + 3) * NOTES.length;
 
 const Key = styled.div`
     width: ${geometry.pianoWidth}px;
@@ -31,11 +30,14 @@ const Key = styled.div`
 const KeyRowDiv = styled.div`
     width: ${props => props.width}px;
     border-bottom: 1px solid black;
-    background-color: #FFFFFF80;
+    background-color: ${props => props.black ? '#101010C0' : '#00500080'};
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
 `
 
 const KeyRow = ({note, width}) =>
-    <KeyRowDiv width={width}>
+    <KeyRowDiv black={isBlack(note)} width={width}>
         <Key black={isBlack(note)}>
             {note}
         </Key>
@@ -54,11 +56,14 @@ const Frame = styled.div`
 `
 
 const Note = styled(Frame)`
-    background-color: black;
+    top: ${props => geometry.totalHeight - (props.note.pitch + 1) * (geometry.pianoHeight + 3)}px;
+    height: ${geometry.pianoHeight + 2}px;
+    left: ${props => geometry.pianoWidth + props.note.start * props.beatWidth}px;
+    width: ${props => props.note.duration * props.beatWidth - 1}px;
+    background-color: hsl(${props => props.color}, 100%, 50%);
     border: none;
-    border-radius: 3px;
+    border-radius: 2px;
 `
-
 const barColor = '#008000';
 
 const Bar = styled(Frame)`
@@ -76,76 +81,46 @@ const Roll = styled.div`
     min-width: 60vw;
     border: 2px solid black;
     border-radius: 4px;
-    background-color: #00FF0020;
+    background-color: #242;
     height: 80vh;
     overflow: scroll;
     position: relative;
 `
 
-const parseFirstMidiTrack = (data) => {
-    const track = data.tracks[0];
-    const division = data.division;
-    const notes = [];
-    let bpm = 140;
-    let eot = false;
-    track.forEach(midiEvent => {
-        if (midiEvent.noteOn) {
-            notes.push({
-                start: midiEvent.delta / division,
-                end: undefined,
-                pitch: midiEvent.noteOn.noteNumber,
-                vel: midiEvent.noteOn.velocity,
-                channel: midiEvent.channel
-            });
-        }
-        else if (midiEvent.noteOff) {
-            notes.filter(note => note.end === undefined && note.channel === midiEvent.channel)
-                .find(note => note.pitch === midiEvent.noteOff.noteNumber)
-                .end = midiEvent.delta / division;
-        }
-        else if (midiEvent.setTempo) {
-            bpm = 6e7/midiEvent.setTempo.microsecondsPerBeat;
-        }
-        else if (midiEvent.endOfTrack) {
-            eot = true;
-        }
-        else {
-            console.warn("unrecognized midi event:", midiEvent);
-        }
-    });
-    return {
-        bpm,
-        notes,
-        // do need? know not. enywhey:
-        division,
-        eot
+const getNotesFromFirstTrack = (data) => {
+    if (!data.tracks) {
+        return [];
     }
+    const scaleTicks = ticks => +(ticks / data.header.ppq / 4).toFixed(3);
+    return data.tracks[0].notes.map(note => ({
+        pitch: note.midi,
+        start: scaleTicks(note.ticks),
+        duration: scaleTicks(note.durationTicks),
+        vel: note.velocity
+    }));
 };
 
 const PianoRoll = () => {
-    const {state, dispatch} = useStore();
-    const [track, setTrack] = React.useState({
-        beats: 8,
+    const {state} = useStore();
+    const [track] = React.useState({
+        beats: 4,
         barsInBeat: 4,
-        notes: []
+        colorHue: Math.floor(360 * Math.random()),
     });
     const beatWidth = React.useMemo(() => track.barsInBeat * geometry.barWidth, [track]);
     const rowWidth = React.useMemo(() => geometry.pianoWidth + track.beats * track.barsInBeat * geometry.barWidth, [track]);
-    const canvasRef = React.useRef();
+    //const canvasRef = React.useRef();
+    const lastNoteRef = React.useRef();
 
     React.useEffect(() => {
         document.title = "Cult210: " + state.selected.title;
-        if (state.selected.data.tracks) {
-            setTrack({...track, ...parseFirstMidiTrack(state.selected.data)}); // TOOD: enhance for multi-track files. there are three MIDI formats.
+        if (lastNoteRef.current) {
+            lastNoteRef.current.scrollIntoView({behavior: 'smooth'});
         }
     }, [state.selected]);
 
-    const noteCoord = beat => geometry.pianoWidth + beat * beatWidth;
-    const noteWidth = note => (note.end - note.start) * beatWidth;
-    const getCoord = ({on, off}) => ({
-        start: geometry.pianoWidth + on * beatWidth,
-        end: geometry.pianoWidth + off * beatWidth
-    });
+    const notes = React.useMemo(() => getNotesFromFirstTrack(state.selected.data), [state.selected.data]);
+    console.log(notes);
 
     return <>
         <div>
@@ -168,11 +143,10 @@ const PianoRoll = () => {
                     )}
                 </Beat>
             )}
+            {notes.map((note, index) => {
+                return <Note key={index} note={note} beatWidth={beatWidth} ref={lastNoteRef} color={track.colorHue}/>
+            })}
         </Roll>
-        {track.notes.map((note, index) => {
-            console.log(note, noteCoord(note.start), noteWidth(note));
-            return <Note top={200 - 10 * note.pitch} left={noteCoord(note.start)} width={noteWidth(note)}/>
-        })}
     </>;
 };
 

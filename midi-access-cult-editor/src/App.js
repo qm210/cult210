@@ -14,12 +14,12 @@ const MainFrame = ({children}) =>
     </div>;
 
 const App = () => {
-    const {state, dispatch} = useStore();
+    const {dispatch} = useStore();
 
     React.useEffect(() => {
         fetchAndDispatch('/tracks/', dispatch, "SET TRACKS");
         fetchAndDispatch('/midis/', dispatch, "SET MIDISTORE");
-    }, []);
+    }, [dispatch]);
 
     return <>
         <MainFrame>
