@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import {useStore, UPDATE_NOTE} from './Store';
+import {useStore, UPDATE_NOTE, activeTracks} from './Store';
 import {DndProvider, useDrag, useDrop} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
@@ -137,13 +137,12 @@ const Roll = (props) => {
 
 const PianoRoll = () => {
     const {state} = useStore();
-    const [track] = React.useState({
+    const [global] = React.useState({
         beats: 4,
         barsInBeat: 4,
-        colorHue: Math.floor(360 * Math.random()),
     });
-    const barWidth = React.useMemo(() => geometry.beatWidth / track.barsInBeat, [track]);
-    const rowWidth = React.useMemo(() => geometry.pianoWidth + track.beats * geometry.beatWidth, [track]);
+    const barWidth = React.useMemo(() => geometry.beatWidth / global.barsInBeat, [global]);
+    const rowWidth = React.useMemo(() => geometry.pianoWidth + global.beats * geometry.beatWidth, [global]);
     const someCenterRef = React.useRef();
 
     React.useEffect(() => {
@@ -167,21 +166,24 @@ const PianoRoll = () => {
                         someCenterRef={someCenterRef}
                     />
                 )}
-                {[...Array(track.beats).keys()].map((beat) =>
+                {[...Array(global.beats).keys()].map((beat) =>
                     <Beat
                         key={beat}
                         index={beat}>
-                        {[...Array(track.barsInBeat).keys()].map((bar) =>
+                        {[...Array(global.barsInBeat).keys()].map((bar) =>
                             <Bar key={bar} index={bar} width={barWidth}/>
                         )}
                     </Beat>
                 )}
-                {state.notes.map((note, index) =>
-                    <Note
-                        key={index}
-                        note={note}
-                        color={track.colorHue}
-                    />
+                {activeTracks(state).forEach(track =>
+                    track.notes.map((note, index) =>
+                        <Note
+                            key={index}
+                            note={note}
+                            color={track.hue}
+                            selectedTrack={track === state.selectedTrack}
+                        />
+                    )
                 )}
             </Roll>
         </DndProvider>

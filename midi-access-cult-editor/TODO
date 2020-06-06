@@ -1,3 +1,6 @@
+react:
+- how to get computed value from state??
+
 ui:
 - display multiple tracks (one pattern per track)
 - play current track (together with all enabled tracks)

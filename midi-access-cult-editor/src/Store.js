@@ -1,49 +1,75 @@
 import React from 'react';
-import {getNotesFromFirstTrack} from './StoreLogic';
+import * as StoreLogic from './StoreLogic';
 
 const StoreContext = React.createContext();
 const initialState = {
     midiStore: [],
     tracks: [],
-    selected: {
+    selected: { // TODO: rename "selected", this is misleading
         title: null,
         filename: null,
         type: null,
         data: {}
     },
-    notes: [],
+    selectedTrack: null,
 };
 
-export const SET_TRACKS = "SET TRACKS";
-export const SET_MIDISTORE = "SET MIDISTORE";
-export const LOAD_TRACK_FROM_MIDI = "LOAD MIDI";
-export const SET_NOTES = "SET NOTES";
-export const UPDATE_NOTE = "UPDATE NOTE";
-export const RESET = "RESET";
+const Track = (name) => ({
+    name,
+    active: false,
+    selectedPattern: null,
+    patterns: [], // unused yet
+    notes: [],
+    hue: Math.floor(360 * Math.random()),
+    channel: null
+});
+
+export const [RESET, LOAD_MIDISTORE, LOAD_TRACK_FROM_MIDI, SET_ACTIVE_NOTES,
+    UPDATE_NOTE, TOGGLE_TRACK] = Array.from(Array(99).keys());
 
 const reducer = (state, action) => {
     switch (action.type) {
-        case SET_TRACKS:
+        case LOAD_MIDISTORE:
+            const tracks = [...state.tracks];
+            const oldTrackNames = state.tracks.map(track => track.name);
+            const newTrackNames = Object.keys(action.payload);
+            newTrackNames.forEach(name => {
+                if (!(name in oldTrackNames)) {
+                    tracks.push(Track(name));
+                }
+            });
             return {
                 ...state,
-                tracks: action.payload
-            }
-        case SET_MIDISTORE:
-            return {
-                ...state,
-                midiStore: action.payload
-            }
+                tracks,
+                midiStore: action.payload,
+            };
+
         case LOAD_TRACK_FROM_MIDI:
+            const updatedTracks = state.tracks.map(track =>
+                track.name === action.payload.track
+                    ? {
+                        name: track.name,
+                        active: true,
+                        //selectedPattern: action.payload.title,
+                        notes: StoreLogic.getNotesFromFirstTrack(action.payload.data),
+                    } : track
+            );
+            console.log(action.payload, state.tracks, updatedTracks);
             return {
                 ...state,
-                selected: action.payload,
-                notes: getNotesFromFirstTrack(action.payload.data),
-            }
-        case SET_NOTES:
+                selected: {
+                    title: action.payload.title,
+                    filename: action.payload.filename,
+                },
+                tracks: updatedTracks,
+            };
+
+        case SET_ACTIVE_NOTES:
             return {
                 ...state,
                 notes: action.payload
-            }
+            };
+
         case UPDATE_NOTE:
             return {
                 ...state,
@@ -52,9 +78,29 @@ const reducer = (state, action) => {
                         ? action.payload
                         : note
                 )
-            }
+            };
+
+        case TOGGLE_TRACK:
+            return state;
+            /*
+            return {
+                ...state,
+                tracks: [
+                    state.tracks.map(track =>
+                        track.name === action.payload.track.name
+                            ? {
+                                ...track,
+                                active: action.payload.value,
+                            }
+                            : track
+                    )
+                ]
+            };
+            */
+
         case RESET:
             return initialState;
+
         default:
             throw new Error(`Unknown Action: ${action.type}`);
     }
@@ -70,3 +116,6 @@ export const StoreProvider = ({children}) => {
 }
 
 export const useStore = () => React.useContext(StoreContext);
+
+//export const activeTracks = (state) => React.useMemo(() => useStore().state.tracks.filter(track => track.active), [state.tracks]);
+export const activeTracks = (state) => state.tracks.filter(track => track.active);

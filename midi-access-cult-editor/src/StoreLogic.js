@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
 import MidiPlayer from 'midi-player-js';
 import Soundfont from 'soundfont-player';
@@ -12,11 +13,7 @@ export const loadMidiTrack = async (dispatch, midi) => {
     const midiData = await Midi.fromUrl(midiUrl);
     dispatch({
         type: Store.LOAD_TRACK_FROM_MIDI,
-        payload: {
-            title: midi.title,
-            filename: midi.filename,
-            data: midiData,
-        }
+        payload: {...midi, data: midiData}
     });
     /*
     const res = await fetch(midiUrl);
@@ -36,21 +33,15 @@ export const loadMidiTrack = async (dispatch, midi) => {
     */
 }
 
-export const fetchAndDispatch = (route, type, dispatch) => {
+export const fetchPromise = (route) =>
     fetch(route)
         .then(res => {
             if (!res.ok) {
-                dispatch({type: Store.RESET});
                 return Promise.reject();
             }
             return res.json();
         })
-        .then(data => {
-            console.log('GET', route, data);
-            dispatch({type, payload: data});
-        })
         .catch(error => console.error(error));
-};
 
 export const getNotesFromFirstTrack = (data) => {
     if (!data.tracks) {

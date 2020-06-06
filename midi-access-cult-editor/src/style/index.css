@@ -36,8 +36,13 @@ button {
     font-weight: bold;
     background-color: #808;
     color: #FF0;
+    border-radius: 8px;
 }
 
 button:hover {
     border: 2px solid #0FF;
+}
+
+button:focus {
+    outline: none;
 }
