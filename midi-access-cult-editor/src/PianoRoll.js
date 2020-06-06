@@ -1,6 +1,8 @@
 import React from 'react';
-import {useStore} from './Store';
 import styled from 'styled-components';
+import {useStore, UPDATE_NOTE} from './Store';
+import {DndProvider, useDrag, useDrop} from 'react-dnd';
+import {HTML5Backend} from 'react-dnd-html5-backend';
 
 const BASE_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const isBlack = note => note.includes('#');
@@ -12,10 +14,10 @@ for (let octave = -1; octave < 10; octave++) {
 
 const geometry = {
     pianoWidth: 27,
-    barWidth: 60,
-    pianoHeight: 7,
+    beatWidth: 210,
+    pianoHeight: 9,
 };
-geometry.totalHeight = (geometry.pianoHeight + 3) * NOTES.length;
+geometry.totalHeight = geometry.pianoHeight * NOTES.length;
 
 const Key = styled.div`
     width: ${geometry.pianoWidth}px;
@@ -24,7 +26,10 @@ const Key = styled.div`
     color: ${props => props.black ? 'white' : 'black'};
     font-size: .55rem;
     font-weight: bold;
-    line-height: ${geometry.pianoHeight}px;
+    line-height: ${geometry.pianoHeight - 3}px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
 `
 
 const KeyRowDiv = styled.div`
@@ -36,12 +41,12 @@ const KeyRowDiv = styled.div`
     -webkit-box-sizing: border-box;
 `
 
-const KeyRow = ({note, width}) =>
+const KeyRow = ({note, width, someCenterRef}) =>
     <KeyRowDiv black={isBlack(note)} width={width}>
-        <Key black={isBlack(note)}>
+        <Key black={isBlack(note)} ref={note === 'A6' ? someCenterRef : null}>
             {note}
         </Key>
-    </KeyRowDiv>
+    </KeyRowDiv>;
 
 const Frame = styled.div`
     box-sizing: border-box;
@@ -55,29 +60,46 @@ const Frame = styled.div`
     border-right: 1px solid ${props => props.color || 'black'};
 `
 
-const Note = styled(Frame)`
-    top: ${props => geometry.totalHeight - (props.note.pitch + 1) * (geometry.pianoHeight + 3)}px;
-    height: ${geometry.pianoHeight + 2}px;
-    left: ${props => geometry.pianoWidth + props.note.start * props.beatWidth}px;
-    width: ${props => props.note.duration * props.beatWidth - 1}px;
-    background-color: hsl(${props => props.color}, 100%, 50%);
-    border: none;
+const NoteFrame = styled(Frame)`
+    top: ${props => geometry.totalHeight - (props.note.pitch + 1) * geometry.pianoHeight - 1}px;
+    height: ${geometry.pianoHeight}px;
+    left: ${props => geometry.pianoWidth + props.note.start * geometry.beatWidth}px;
+    width: ${props => props.note.duration * geometry.beatWidth - 1}px;
+    background-color: hsl(${props => props.color}, 100%, ${props => props.note.selected ? 60 : 50}%);
+    border: 1px solid hsla(${props => props.color}, 100%, ${props => props.note.selected ? 100 : 50}%, 50%);
     border-radius: 2px;
 `
+const NoteType = 'Note';
+const Note = ({note, color}) => {
+    const [{isDragging}, drag] = useDrag({
+        item: {...note, type: NoteType},
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+        })
+    });
+    return isDragging ? <div ref={drag}/> :
+        <NoteFrame
+            ref={drag}
+            note={note}
+            color={color}
+        />;
+};
+
 const barColor = '#008000';
 
 const Bar = styled(Frame)`
-    width: ${geometry.barWidth}px;
-    left: ${props => props.index * geometry.barWidth + (props.offset || 0)}px;
+    width: ${props => props.width}px;
+    left: ${props => props.index * props.width + (props.offset || 0)}px;
     border-right: 1px dashed ${barColor};
 `
 
 const Beat = styled(Frame)`
-    left: ${props => geometry.pianoWidth + props.index * props.width}px;
+    width: ${geometry.beatWidth}px;
+    left: ${props => geometry.pianoWidth + props.index * geometry.beatWidth}px;
     border-right: 2px solid ${barColor};
 `
 
-const Roll = styled.div`
+const RollDiv = styled.div`
     min-width: 60vw;
     border: 2px solid black;
     border-radius: 4px;
@@ -87,18 +109,31 @@ const Roll = styled.div`
     position: relative;
 `
 
-const getNotesFromFirstTrack = (data) => {
-    if (!data.tracks) {
-        return [];
-    }
-    const scaleTicks = ticks => +(ticks / data.header.ppq / 4).toFixed(3);
-    return data.tracks[0].notes.map(note => ({
-        pitch: note.midi,
-        start: scaleTicks(note.ticks),
-        duration: scaleTicks(note.durationTicks),
-        vel: note.velocity
-    }));
+const quantize = (x, q) => Math.round(x/q) * q;
+
+const Roll = (props) => {
+    const {dispatch} = useStore();
+    const quantX = 1/32;
+    const quantY = 1;
+    const [, drop] = useDrop({
+        accept: NoteType,
+        drop: (note, monitor) => {
+            const delta = monitor.getDifferenceFromInitialOffset();
+            note.start = Math.max(quantize(note.start + delta.x / geometry.beatWidth, quantX), 0);
+            note.pitch = quantize(note.pitch - delta.y / geometry.pianoHeight, quantY);
+            dispatch({
+                type: UPDATE_NOTE,
+                payload: note
+            });
+            return undefined
+        }
+    });
+    return <RollDiv ref={drop}>
+        {props.children}
+    </RollDiv>
 };
+
+// TODO: think about React.memo()..? - custom "track hash" equality check..?
 
 const PianoRoll = () => {
     const {state} = useStore();
@@ -107,46 +142,49 @@ const PianoRoll = () => {
         barsInBeat: 4,
         colorHue: Math.floor(360 * Math.random()),
     });
-    const beatWidth = React.useMemo(() => track.barsInBeat * geometry.barWidth, [track]);
-    const rowWidth = React.useMemo(() => geometry.pianoWidth + track.beats * track.barsInBeat * geometry.barWidth, [track]);
-    //const canvasRef = React.useRef();
-    const lastNoteRef = React.useRef();
+    const barWidth = React.useMemo(() => geometry.beatWidth / track.barsInBeat, [track]);
+    const rowWidth = React.useMemo(() => geometry.pianoWidth + track.beats * geometry.beatWidth, [track]);
+    const someCenterRef = React.useRef();
 
     React.useEffect(() => {
         document.title = "Cult210: " + state.selected.title;
-        if (lastNoteRef.current) {
-            lastNoteRef.current.scrollIntoView({behavior: 'smooth'});
+        if (someCenterRef.current) {
+            someCenterRef.current.scrollIntoView({behavior: 'smooth'});
         }
     }, [state.selected]);
-
-    const notes = React.useMemo(() => getNotesFromFirstTrack(state.selected.data), [state.selected.data]);
-    console.log(notes);
 
     return <>
         <div>
             {state.selected.title || "nothing selected"}
         </div>
-        <Roll>
-            {NOTES.slice().reverse().map((note, index) =>
-                <KeyRow key={index} note={note} width={rowWidth}/>
-            )}
-            {[...Array(track.beats).keys()].map((beat) =>
-                <Beat
-                    key={beat}
-                    index={beat}
-                    width={beatWidth}>
-                    {[...Array(track.barsInBeat).keys()].map((bar) =>
-                        <Bar
-                            key={bar}
-                            index={bar}
-                        />
-                    )}
-                </Beat>
-            )}
-            {notes.map((note, index) => {
-                return <Note key={index} note={note} beatWidth={beatWidth} ref={lastNoteRef} color={track.colorHue}/>
-            })}
-        </Roll>
+        <DndProvider backend={HTML5Backend}>
+            <Roll>
+                {NOTES.slice().reverse().map((note, index) =>
+                    <KeyRow
+                        key={index}
+                        note={note}
+                        width={rowWidth}
+                        someCenterRef={someCenterRef}
+                    />
+                )}
+                {[...Array(track.beats).keys()].map((beat) =>
+                    <Beat
+                        key={beat}
+                        index={beat}>
+                        {[...Array(track.barsInBeat).keys()].map((bar) =>
+                            <Bar key={bar} index={bar} width={barWidth}/>
+                        )}
+                    </Beat>
+                )}
+                {state.notes.map((note, index) =>
+                    <Note
+                        key={index}
+                        note={note}
+                        color={track.colorHue}
+                    />
+                )}
+            </Roll>
+        </DndProvider>
     </>;
 };
 

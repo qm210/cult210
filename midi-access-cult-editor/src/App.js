@@ -1,6 +1,6 @@
 import React from 'react';
-import {useStore} from './Store';
-import {fetchAndDispatch} from './MiscLogic';
+import * as Store from './Store';
+import {fetchAndDispatch} from './StoreLogic';
 import PianoRoll from './PianoRoll';
 import Selector from './Selector';
 
@@ -14,11 +14,11 @@ const MainFrame = ({children}) =>
     </div>;
 
 const App = () => {
-    const {dispatch} = useStore();
+    const {dispatch} = Store.useStore();
 
     React.useEffect(() => {
-        fetchAndDispatch('/tracks/', dispatch, "SET TRACKS");
-        fetchAndDispatch('/midis/', dispatch, "SET MIDISTORE");
+        fetchAndDispatch('/tracks/', Store.SET_TRACKS, dispatch);
+        fetchAndDispatch('/midis/', Store.SET_MIDISTORE, dispatch);
     }, [dispatch]);
 
     return <>

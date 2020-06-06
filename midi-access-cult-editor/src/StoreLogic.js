@@ -1,24 +1,26 @@
+import React from 'react';
 import MidiPlayer from 'midi-player-js';
 import Soundfont from 'soundfont-player';
 import {Midi} from '@tonejs/midi';
+import * as Store from './Store';
 
 var ac = new AudioContext();
 var Player;
 
-export const playMidi = async (dispatch, midi) => {
+export const loadMidiTrack = async (dispatch, midi) => {
     const midiUrl = `/midis/${midi.filename}`;
-    const res = await fetch(midiUrl);
-    const blob = await res.blob();
-
     const midiData = await Midi.fromUrl(midiUrl);
     dispatch({
-        type: "LOAD MIDI",
+        type: Store.LOAD_TRACK_FROM_MIDI,
         payload: {
             title: midi.title,
             filename: midi.filename,
             data: midiData,
         }
     });
+    /*
+    const res = await fetch(midiUrl);
+    const blob = await res.blob();
 
     const arrayBuffer = await new Response(blob).arrayBuffer();
     Soundfont.instrument(ac, 'clavinet', { soundfont: 'FluidR3_GM' }).then(instrument => {
@@ -31,14 +33,14 @@ export const playMidi = async (dispatch, midi) => {
         Player.loadArrayBuffer(arrayBuffer);
         Player.play();
     });
-
+    */
 }
 
-export const fetchAndDispatch = (route, dispatch, type) => {
+export const fetchAndDispatch = (route, type, dispatch) => {
     fetch(route)
         .then(res => {
             if (!res.ok) {
-                dispatch({type: "RESET"});
+                dispatch({type: Store.RESET});
                 return Promise.reject();
             }
             return res.json();
@@ -48,4 +50,19 @@ export const fetchAndDispatch = (route, dispatch, type) => {
             dispatch({type, payload: data});
         })
         .catch(error => console.error(error));
-}
+};
+
+export const getNotesFromFirstTrack = (data) => {
+    if (!data.tracks) {
+        return [];
+    }
+    const scaleTicks = ticks => +(ticks / data.header.ppq / 4).toFixed(3);
+    return data.tracks[0].notes.map((note, index) => ({
+        id: `note${index}`,
+        pitch: note.midi,
+        start: scaleTicks(note.ticks),
+        duration: scaleTicks(note.durationTicks),
+        vel: +note.velocity.toFixed(2),
+        selected: index === 0,
+    }));
+};

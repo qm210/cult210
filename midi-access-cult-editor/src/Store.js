@@ -1,4 +1,5 @@
 import React from 'react';
+import {getNotesFromFirstTrack} from './StoreLogic';
 
 const StoreContext = React.createContext();
 const initialState = {
@@ -7,28 +8,52 @@ const initialState = {
     selected: {
         title: null,
         filename: null,
+        type: null,
         data: {}
-    }
+    },
+    notes: [],
 };
+
+export const SET_TRACKS = "SET TRACKS";
+export const SET_MIDISTORE = "SET MIDISTORE";
+export const LOAD_TRACK_FROM_MIDI = "LOAD MIDI";
+export const SET_NOTES = "SET NOTES";
+export const UPDATE_NOTE = "UPDATE NOTE";
+export const RESET = "RESET";
 
 const reducer = (state, action) => {
     switch (action.type) {
-        case "SET TRACKS":
+        case SET_TRACKS:
             return {
                 ...state,
                 tracks: action.payload
             }
-        case "SET MIDISTORE":
+        case SET_MIDISTORE:
             return {
                 ...state,
                 midiStore: action.payload
             }
-        case "LOAD MIDI":
+        case LOAD_TRACK_FROM_MIDI:
             return {
                 ...state,
-                selected: action.payload
+                selected: action.payload,
+                notes: getNotesFromFirstTrack(action.payload.data),
             }
-        case "RESET":
+        case SET_NOTES:
+            return {
+                ...state,
+                notes: action.payload
+            }
+        case UPDATE_NOTE:
+            return {
+                ...state,
+                notes: state.notes.map(note =>
+                    note.id === action.payload.id
+                        ? action.payload
+                        : note
+                )
+            }
+        case RESET:
             return initialState;
         default:
             throw new Error(`Unknown Action: ${action.type}`);
@@ -45,10 +70,3 @@ export const StoreProvider = ({children}) => {
 }
 
 export const useStore = () => React.useContext(StoreContext);
-
-/*
-export const useStoreSelected = () => {
-    const {state, dispatch} = useStore();
-    return state.selected;
-}
-*/

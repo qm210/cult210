@@ -1,6 +1,6 @@
 import React from 'react';
 import {useStore} from './Store';
-import {playMidi} from './MiscLogic';
+import {loadMidiTrack} from './StoreLogic';
 
 const Selector = () => {
     const {state, dispatch} = useStore();
@@ -12,15 +12,14 @@ const Selector = () => {
                 <li key={index}>
                     <b>{track}</b>:
                     <div>
-                        {midiStore[track] ?
-                            midiStore[track].map((midi, mIndex) =>
+                        {midiStore[track]
+                            ? midiStore[track].map((midi, mIndex) =>
                                 <button key={mIndex}
-                                    onClick={() => playMidi(dispatch, midi)}>
+                                    onClick={() => loadMidiTrack(dispatch, midi)}>
                                     {midi.title}
                                 </button>
                             )
-                        :
-                            "empty"
+                            : "empty"
                         }
                     </div>
                 </li>

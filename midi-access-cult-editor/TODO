@@ -1,6 +1,13 @@
 ui:
+- display multiple tracks (one pattern per track)
+- play current track (together with all enabled tracks)
 - edit midi pattern
 - curve function
 
+server:
+- persist current state to file (session_name.cult)
+- load current state to file (session_name.cult)
+
 general:
-- react performance optimization
+- react performance optimization?
+- test web midi in order to not-stress-nr4?
