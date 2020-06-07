@@ -1,7 +1,8 @@
-react:
-- how to get computed value from state??
+--> DragNDrop KILLS
+--> switch to Recoil from Global Context
 
 ui:
+- fix uncheck of track
 - display multiple tracks (one pattern per track)
 - play current track (together with all enabled tracks)
 - edit midi pattern

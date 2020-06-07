@@ -21,11 +21,11 @@ const Track = (name) => ({
     patterns: [], // unused yet
     notes: [],
     hue: Math.floor(360 * Math.random()),
-    channel: null
+    channel: 0,
 });
 
 export const [RESET, LOAD_MIDISTORE, LOAD_TRACK_FROM_MIDI, SET_ACTIVE_NOTES,
-    UPDATE_NOTE, TOGGLE_TRACK] = Array.from(Array(99).keys());
+    UPDATE_NOTE, TOGGLE_TRACK, SET_TRACK_CHANNEL] = Array.from(Array(99).keys());
 
 const reducer = (state, action) => {
     switch (action.type) {
@@ -48,9 +48,9 @@ const reducer = (state, action) => {
             const updatedTracks = state.tracks.map(track =>
                 track.name === action.payload.track
                     ? {
-                        name: track.name,
+                        ...track,
                         active: true,
-                        //selectedPattern: action.payload.title,
+                        selectedPattern: action.payload.title,
                         notes: StoreLogic.getNotesFromFirstTrack(action.payload.data),
                     } : track
             );
@@ -81,22 +81,30 @@ const reducer = (state, action) => {
             };
 
         case TOGGLE_TRACK:
-            return state;
-            /*
             return {
                 ...state,
-                tracks: [
-                    state.tracks.map(track =>
-                        track.name === action.payload.track.name
-                            ? {
-                                ...track,
-                                active: action.payload.value,
-                            }
-                            : track
-                    )
-                ]
+                tracks: state.tracks.map(track =>
+                    track.name === action.payload.track.name
+                        ? {
+                            ...track,
+                            active: action.payload.value,
+                        }
+                        : track
+                )
             };
-            */
+
+        case SET_TRACK_CHANNEL:
+            return {
+                ...state,
+                tracks: state.tracks.map(track =>
+                    track.name === action.payload.track.name
+                        ? {
+                            ...track,
+                            channel: action.payload.value,
+                        }
+                        : track
+                )
+            };
 
         case RESET:
             return initialState;
@@ -117,5 +125,4 @@ export const StoreProvider = ({children}) => {
 
 export const useStore = () => React.useContext(StoreContext);
 
-//export const activeTracks = (state) => React.useMemo(() => useStore().state.tracks.filter(track => track.active), [state.tracks]);
-export const activeTracks = (state) => state.tracks.filter(track => track.active);
+//export const activeTracks = React.useMemo(() => useStore()., [state.tracks]); // This is why I will try Recoil

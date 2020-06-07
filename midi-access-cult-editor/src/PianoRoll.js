@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import {useStore, UPDATE_NOTE, activeTracks} from './Store';
+import {useStore, UPDATE_NOTE} from './Store';
 import {DndProvider, useDrag, useDrop} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
@@ -175,7 +175,7 @@ const PianoRoll = () => {
                         )}
                     </Beat>
                 )}
-                {activeTracks(state).forEach(track =>
+                {state.tracks.filter(track => track.active).map(track =>
                     track.notes.map((note, index) =>
                         <Note
                             key={index}

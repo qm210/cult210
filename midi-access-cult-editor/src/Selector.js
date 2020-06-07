@@ -1,5 +1,5 @@
 import React from 'react';
-import {useStore, TOGGLE_TRACK} from './Store';
+import * as Store from './Store';
 import {loadMidiTrack} from './StoreLogic';
 import styled from 'styled-components';
 
@@ -10,6 +10,19 @@ const LargeCheckBox = props =>
         marginRight: 10,
     }}/>;
 
+const ChannelSpinBox = props =>
+    <input type="number"
+        value={props.value}
+        onChange={props.onChange}
+        min={0}
+        max={15}
+        required
+        disabled={props.value == null}
+        style={{
+            height: 20
+        }}
+    />;
+
 const RedButton = styled.button`
     background-color: #800010;
     font-size: 20;
@@ -17,7 +30,7 @@ const RedButton = styled.button`
 const DebugButton = (props) => <RedButton {...props}>DEBUG</RedButton>;
 
 const Selector = () => {
-    const {state, dispatch} = useStore();
+    const {state, dispatch} = Store.useStore();
     const {midiStore, tracks} = state;
 
     return <>
@@ -27,14 +40,18 @@ const Selector = () => {
                     <LargeCheckBox
                         checked={track.active}
                         onChange={event => dispatch({
-                            type: TOGGLE_TRACK,
-                            payload: {
-                                track,
-                                value: event.target.value
-                            }
+                            type: Store.TOGGLE_TRACK,
+                            payload: {track, value: event.target.value}
                         })}
                     />
                     <b>{track.name}</b>:
+                    channel <ChannelSpinBox
+                        value={track.channel}
+                        onChange={event => dispatch({
+                            type: Store.SET_TRACK_CHANNEL,
+                            payload: {track, value: event.target.value}
+                        })}
+                    />
                     <div>
                         {midiStore[track.name]
                             ? midiStore[track.name].map((midi, mIndex) =>
