@@ -1,6 +1,6 @@
 import React from 'react';
 import * as ReactDnd from 'react-dnd';
-import {HTML5Backend, getEmptyImage} from 'react-dnd-html5-backend';
+import {HTML5Backend} from 'react-dnd-html5-backend';
 import styled from 'styled-components';
 import * as Store from './Store';
 
@@ -74,17 +74,12 @@ const NoteFrame = styled(Frame)`
 const NoteType = 'Note';
 const Note = (props) => {
     const {note} = props;
-    const [{isDragging}, drag, preview] = ReactDnd.useDrag({
+    const [{isDragging}, drag] = ReactDnd.useDrag({
         item: {...note, type: NoteType},
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         })
     });
-    React.useEffect(() => {
-        preview(getEmptyImage(), {
-            captureDraggingState: true
-        });
-    }, [preview]);
     return isDragging ? <div ref={drag}/> :
         <NoteFrame
             ref={drag}
@@ -139,51 +134,6 @@ const Roll = (props) => {
         {props.children}
     </RollDiv>
 };
-
-const quantizeStyle = (initialOffset, currentOffset) => {
-    if (!initialOffset || !currentOffset) {
-        return {display: 'none'};
-    }
-    const x = initialOffset.x + quantize(currentOffset.x - initialOffset.x, geometry.beatWidth * quantX);
-    const y = initialOffset.y + quantize(currentOffset.y - initialOffset.y, geometry.pianoHeight * quantY);
-    const transform = `translate(${x}px, ${y}px)`;
-    return {transform, WebkitTransform: transform};
-}
-const QuantizedDragLayer = (props) => {
-    const {itemType, isDragging, item, initialOffset, currentOffset}
-        = ReactDnd.useDragLayer((monitor) => ({
-            item: monitor.getItem(),
-            itemType: monitor.getItemType(),
-            initialOffset: monitor.getDifferenceFromInitialOffset(),
-            currentOffset: monitor.getSourceClientOffset(),
-            isDragging: monitor.isDragging(),
-        }));
-    const renderItem = () => {
-        switch(itemType) {
-            case NoteType:
-                return <Note note={item} color={0}/>;
-            default:
-                return null;
-        }
-    }
-    console.log(isDragging, quantizeStyle(initialOffset, currentOffset), renderItem());
-    return !isDragging ? null : <div
-        style={{
-            position: 'fixed',
-            pointerEvents: 'none',
-            zIndex: 100,
-            left: 0,
-            top: 0,
-            width: '100%',
-            height: '100%'
-        }}>
-            <div style={quantizeStyle()}>
-                {renderItem()}
-            </div>
-    </div>;
-
-}
-
 // TODO: think about React.memo()..? - custom "track hash" equality check..?
 
 const PianoRoll = () => {
@@ -241,7 +191,6 @@ const PianoRoll = () => {
                     )
                 )}
             </Roll>
-            <QuantizedDragLayer/>
         </ReactDnd.DndProvider>
     </>;
 };
