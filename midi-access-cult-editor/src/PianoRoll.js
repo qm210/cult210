@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import {useStore, UPDATE_NOTE} from './Store';
+import * as Store from './Store';
 import {DndProvider, useDrag, useDrop} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
@@ -61,16 +61,19 @@ const Frame = styled.div`
 `
 
 const NoteFrame = styled(Frame)`
-    top: ${props => geometry.totalHeight - (props.note.pitch + 1) * geometry.pianoHeight - 1}px;
     height: ${geometry.pianoHeight}px;
-    left: ${props => geometry.pianoWidth + props.note.start * geometry.beatWidth}px;
-    width: ${props => props.note.duration * geometry.beatWidth - 1}px;
-    background-color: hsl(${props => props.color}, 100%, ${props => props.note.selected ? 60 : 50}%);
-    border: 1px solid hsla(${props => props.color}, 100%, ${props => props.note.selected ? 100 : 50}%, 50%);
+    ${props => `
+        top: ${geometry.totalHeight - (props.note.pitch + 1) * geometry.pianoHeight - 1}px;
+        left: ${geometry.pianoWidth + props.note.start * geometry.beatWidth}px;
+        width: ${props.note.duration * geometry.beatWidth - 1}px;
+        background-color: hsla(${props.color}, 100%, ${props.note.selected ? 60 : 50}%, ${props.trackSelected ? 100 : 50}%);
+        border: 1px solid hsla(${props.color}, 100%, ${props.note.selected ? 100 : 50}%, 50%);
+    `}
     border-radius: 2px;
 `
 const NoteType = 'Note';
-const Note = ({note, color}) => {
+const Note = (props) => {
+    const {note} = props;
     const [{isDragging}, drag] = useDrag({
         item: {...note, type: NoteType},
         collect: (monitor) => ({
@@ -80,8 +83,7 @@ const Note = ({note, color}) => {
     return isDragging ? <div ref={drag}/> :
         <NoteFrame
             ref={drag}
-            note={note}
-            color={color}
+            {...props}
         />;
 };
 
@@ -112,7 +114,7 @@ const RollDiv = styled.div`
 const quantize = (x, q) => Math.round(x/q) * q;
 
 const Roll = (props) => {
-    const {dispatch} = useStore();
+    const {dispatch} = Store.useStore();
     const quantX = 1/32;
     const quantY = 1;
     const [, drop] = useDrop({
@@ -122,7 +124,7 @@ const Roll = (props) => {
             note.start = Math.max(quantize(note.start + delta.x / geometry.beatWidth, quantX), 0);
             note.pitch = quantize(note.pitch - delta.y / geometry.pianoHeight, quantY);
             dispatch({
-                type: UPDATE_NOTE,
+                type: Store.UPDATE_NOTE,
                 payload: note
             });
             return undefined
@@ -136,7 +138,7 @@ const Roll = (props) => {
 // TODO: think about React.memo()..? - custom "track hash" equality check..?
 
 const PianoRoll = () => {
-    const {state} = useStore();
+    const {state, dispatch} = Store.useStore();
     const [global] = React.useState({
         beats: 4,
         barsInBeat: 4,
@@ -181,7 +183,11 @@ const PianoRoll = () => {
                             key={index}
                             note={note}
                             color={track.hue}
-                            selectedTrack={track === state.selectedTrack}
+                            trackSelected={track.name === state.selectedTrackName}
+                            onClick={() => dispatch({
+                                type: Store.SELECT_TRACK_BY_NAME,
+                                payload: track.name
+                            })}
                         />
                     )
                 )}

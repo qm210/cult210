@@ -11,7 +11,7 @@ const initialState = {
         type: null,
         data: {}
     },
-    selectedTrack: null,
+    selectedTrackName: null,
 };
 
 const Track = (name) => ({
@@ -25,7 +25,7 @@ const Track = (name) => ({
 });
 
 export const [RESET, LOAD_MIDISTORE, LOAD_TRACK_FROM_MIDI, SET_ACTIVE_NOTES,
-    UPDATE_NOTE, TOGGLE_TRACK, SET_TRACK_CHANNEL] = Array.from(Array(99).keys());
+    UPDATE_NOTE, SELECT_TRACK_BY_NAME, TOGGLE_TRACK, SET_TRACK_CHANNEL] = Array.from(Array(99).keys());
 
 const reducer = (state, action) => {
     switch (action.type) {
@@ -62,23 +62,32 @@ const reducer = (state, action) => {
                     filename: action.payload.filename,
                 },
                 tracks: updatedTracks,
-            };
-
-        case SET_ACTIVE_NOTES:
-            return {
-                ...state,
-                notes: action.payload
+                selectedTrackName: action.payload.track,
             };
 
         case UPDATE_NOTE:
             return {
                 ...state,
-                notes: state.notes.map(note =>
-                    note.id === action.payload.id
-                        ? action.payload
-                        : note
-                )
+                tracks: state.tracks.map(track =>
+                    track.name === state.selectedTrackName
+                        ? {
+                            ...track,
+                            notes: track.notes.map(note =>
+                                note.id === action.payload.id
+                                    ? action.payload
+                                    : note
+                            )
+                        }
+                        : track
+                    )
             };
+
+        case SELECT_TRACK_BY_NAME:
+            console.log(action.payload);
+            return {
+                ...state,
+                selectedTrackName: action.payload
+            }
 
         case TOGGLE_TRACK:
             return {
