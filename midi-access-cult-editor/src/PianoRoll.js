@@ -1,8 +1,8 @@
 import React from 'react';
+import * as ReactDnd from 'react-dnd';
+import {HTML5Backend, getEmptyImage} from 'react-dnd-html5-backend';
 import styled from 'styled-components';
 import * as Store from './Store';
-import {DndProvider, useDrag, useDrop} from 'react-dnd';
-import {HTML5Backend} from 'react-dnd-html5-backend';
 
 const BASE_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const isBlack = note => note.includes('#');
@@ -74,12 +74,17 @@ const NoteFrame = styled(Frame)`
 const NoteType = 'Note';
 const Note = (props) => {
     const {note} = props;
-    const [{isDragging}, drag] = useDrag({
+    const [{isDragging}, drag, preview] = ReactDnd.useDrag({
         item: {...note, type: NoteType},
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         })
     });
+    React.useEffect(() => {
+        preview(getEmptyImage(), {
+            captureDraggingState: true
+        });
+    }, [preview]);
     return isDragging ? <div ref={drag}/> :
         <NoteFrame
             ref={drag}
@@ -111,13 +116,13 @@ const RollDiv = styled.div`
     position: relative;
 `
 
+const quantX = 1/32;
+const quantY = 1;
 const quantize = (x, q) => Math.round(x/q) * q;
 
 const Roll = (props) => {
     const {dispatch} = Store.useStore();
-    const quantX = 1/32;
-    const quantY = 1;
-    const [, drop] = useDrop({
+    const [, drop] = ReactDnd.useDrop({
         accept: NoteType,
         drop: (note, monitor) => {
             const delta = monitor.getDifferenceFromInitialOffset();
@@ -134,6 +139,50 @@ const Roll = (props) => {
         {props.children}
     </RollDiv>
 };
+
+const quantizeStyle = (initialOffset, currentOffset) => {
+    if (!initialOffset || !currentOffset) {
+        return {display: 'none'};
+    }
+    const x = initialOffset.x + quantize(currentOffset.x - initialOffset.x, geometry.beatWidth * quantX);
+    const y = initialOffset.y + quantize(currentOffset.y - initialOffset.y, geometry.pianoHeight * quantY);
+    const transform = `translate(${x}px, ${y}px)`;
+    return {transform, WebkitTransform: transform};
+}
+const QuantizedDragLayer = (props) => {
+    const {itemType, isDragging, item, initialOffset, currentOffset}
+        = ReactDnd.useDragLayer((monitor) => ({
+            item: monitor.getItem(),
+            itemType: monitor.getItemType(),
+            initialOffset: monitor.getDifferenceFromInitialOffset(),
+            currentOffset: monitor.getSourceClientOffset(),
+            isDragging: monitor.isDragging(),
+        }));
+    const renderItem = () => {
+        switch(itemType) {
+            case NoteType:
+                return <Note note={item} color={0}/>;
+            default:
+                return null;
+        }
+    }
+    console.log(isDragging, quantizeStyle(initialOffset, currentOffset), renderItem());
+    return !isDragging ? null : <div
+        style={{
+            position: 'fixed',
+            pointerEvents: 'none',
+            zIndex: 100,
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%'
+        }}>
+            <div style={quantizeStyle()}>
+                {renderItem()}
+            </div>
+    </div>;
+
+}
 
 // TODO: think about React.memo()..? - custom "track hash" equality check..?
 
@@ -158,7 +207,7 @@ const PianoRoll = () => {
         <div>
             {state.selected.title || "nothing selected"}
         </div>
-        <DndProvider backend={HTML5Backend}>
+        <ReactDnd.DndProvider backend={HTML5Backend}>
             <Roll>
                 {NOTES.slice().reverse().map((note, index) =>
                     <KeyRow
@@ -184,7 +233,7 @@ const PianoRoll = () => {
                             note={note}
                             color={track.hue}
                             trackSelected={track.name === state.selectedTrackName}
-                            onClick={() => dispatch({
+                            onMouseDown={() => dispatch({
                                 type: Store.SELECT_TRACK_BY_NAME,
                                 payload: track.name
                             })}
@@ -192,7 +241,8 @@ const PianoRoll = () => {
                     )
                 )}
             </Roll>
-        </DndProvider>
+            <QuantizedDragLayer/>
+        </ReactDnd.DndProvider>
     </>;
 };
 
