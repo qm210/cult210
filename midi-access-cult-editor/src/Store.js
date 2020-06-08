@@ -1,5 +1,6 @@
 import React from 'react';
 import * as StoreLogic from './StoreLogic';
+import {atom} from 'recoil';
 
 const StoreContext = React.createContext();
 const initialState = {
@@ -135,3 +136,12 @@ export const StoreProvider = ({children}) => {
 export const useStore = () => React.useContext(StoreContext);
 
 //export const activeTracks = React.useMemo(() => useStore()., [state.tracks]); // This is why I will try Recoil
+
+export const noteName = atom({
+    key: 'noteName',
+    default: 'defaultNoteName'
+});
+export const trackName = atom({
+    key: 'trackName',
+    default: 'defaultTrackName :)'
+});

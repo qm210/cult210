@@ -1,4 +1,5 @@
 import React from 'react';
+import {useRecoilState} from 'recoil';
 import * as ReactDnd from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import styled from 'styled-components';
@@ -153,10 +154,11 @@ const PianoRoll = () => {
         }
     }, [state.selected]);
 
+    const [storedTrackName, setStoredTrackName] = useRecoilState(Store.trackName);
+    const [storedNoteName, setStoredNoteName] = useRecoilState(Store.noteName);
+
     return <>
-        <div>
-            {state.selected.title || "nothing selected"}
-        </div>
+        <h2>{storedTrackName} {storedNoteName}</h2>
         <ReactDnd.DndProvider backend={HTML5Backend}>
             <Roll>
                 {NOTES.slice().reverse().map((note, index) =>
@@ -183,10 +185,11 @@ const PianoRoll = () => {
                             note={note}
                             color={track.hue}
                             trackSelected={track.name === state.selectedTrackName}
-                            onMouseDown={() => dispatch({
+                            onMouseDown={() => {setStoredNoteName(note.id);
+                                dispatch({
                                 type: Store.SELECT_TRACK_BY_NAME,
                                 payload: track.name
-                            })}
+                            })}}
                         />
                     )
                 )}

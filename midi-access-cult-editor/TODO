@@ -9,9 +9,9 @@ ui:
 - curve function
 
 server:
-- persist current state to file (session_name.cult)
+- persist current state to file (session_name.cult), autosave
 - load current state to file (session_name.cult)
 
 general:
-- react performance optimization?
+- react performance optimization
 - test web midi in order to not-stress-nr4?

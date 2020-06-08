@@ -1,4 +1,5 @@
 import React from 'react';
+import {useRecoilState} from 'recoil';
 import * as Store from './Store';
 import {loadMidiTrack} from './StoreLogic';
 import styled from 'styled-components';
@@ -33,6 +34,9 @@ const Selector = () => {
     const {state, dispatch} = Store.useStore();
     const {midiStore, tracks} = state;
 
+    const [storedTrackName, setStoredTrackName] = useRecoilState(Store.trackName);
+    const [storedNoteName, setStoredNoteName] = useRecoilState(Store.noteName);
+
     return <>
         <ul>
             {tracks.map((track, index) =>
@@ -56,7 +60,7 @@ const Selector = () => {
                         {midiStore[track.name]
                             ? midiStore[track.name].map((midi, mIndex) =>
                                 <button key={mIndex}
-                                    onClick={() => loadMidiTrack(dispatch, midi)}
+                                    onClick={() => {loadMidiTrack(dispatch, midi); setStoredTrackName(midi.title);}}
                                     style={{
                                         backgroundColor: track.active ? "purple" : "gray",
                                         borderColor: midi.title === track.selectedPattern ? "red" : "white"
