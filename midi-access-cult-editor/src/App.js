@@ -1,17 +1,14 @@
 import React from 'react';
+import styled from 'styled-components'
 import * as Store from './Store';
 import {fetchPromise} from './StoreLogic';
 import PianoRoll from './PianoRoll';
 import Selector from './Selector';
+import PlayBox from './PlayBox';
 
-const MainFrame = ({children}) =>
-    <div className="mainframe">
-        {children.map((child, index) =>
-            <div key={index} className="subframe">
-                {child}
-            </div>
-        )}
-    </div>;
+const MainFrame = (props) => <div className="mainframe" {...props}>{props.children}</div>;
+const SubFrame = (props) => <div className="subframe" {...props}>{props.children}</div>;;
+const Column = styled.div`display: flex; flex-direction:column;`
 
 const App = () => {
     const {dispatch} = Store.useStore();
@@ -28,8 +25,17 @@ const App = () => {
 
     return <>
         <MainFrame>
-            <PianoRoll/>
-            <Selector/>
+            <SubFrame>
+                <PianoRoll/>
+            </SubFrame>
+            <Column>
+                <SubFrame>
+                    <Selector/>
+                </SubFrame>
+                <SubFrame>
+                    <PlayBox/>
+                </SubFrame>
+            </Column>
         </MainFrame>
     </>
 }
