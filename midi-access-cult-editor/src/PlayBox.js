@@ -31,12 +31,9 @@ const PlayBox = () => {
                 note.start >= beat && note.start < beat + beatDelta
             );
             notesToPlay.forEach(note => {
-                console.log(note, track.channel, note.duration * msPerBeat);
                 midiOut.playNote(note.pitch + 12 * track.transposeOctaves, track.channel, {
-                    duration: note.duration * 10 * msPerBeat,
-                }); //, track.channel, {
-//                    duration: note.duration * msPerBeat
-  //              });
+                    duration: note.duration * msPerBeat,
+                });
                 midiOut.stopNote(note.pitch);
             })
         });

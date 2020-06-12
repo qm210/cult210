@@ -46,7 +46,7 @@ const PianoRoll = () => {
 
     return <>
         <ReactDnd.DndProvider backend={HTML5Backend}>
-            <Roll updateNote={note => State.updateNote(tracks, setTracks, selectedTrackName, note)}>
+            <Roll updateNote={note => State.updateNote(setTracks, selectedTrackName, note)}>
                 {NOTES.slice().reverse().map((note, index) =>
                     <KeyRow
                         key={index}
