@@ -33,6 +33,7 @@ const PlayBox = () => {
             notesToPlay.forEach(note => {
                 midiOut.playNote(note.pitch + 12 * track.transposeOctaves, track.channel, {
                     duration: note.duration * msPerBeat,
+                    velocity: note.velocity
                 });
                 midiOut.stopNote(note.pitch);
             })

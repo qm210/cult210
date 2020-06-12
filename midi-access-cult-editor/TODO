@@ -1,10 +1,10 @@
---> DragNDrop KILLS
---> switch to Recoil from Global Context
+general:
+- [NEXT] react performance optimization
+--- fix styled.div.attrib()
+--- research weird Batcher / setState warning (Recoil)
 
 ui:
 - fix uncheck of track
-- display multiple tracks (one pattern per track)
-- play current track (together with all enabled tracks)
 - edit midi pattern
 - curve function
 
@@ -12,6 +12,3 @@ server:
 - persist current state to file (session_name.cult), autosave
 - load current state to file (session_name.cult)
 
-general:
-- react performance optimization
-- test web midi in order to not-stress-nr4?
