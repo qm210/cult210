@@ -55,5 +55,6 @@ export const getNotesFromFirstTrack = (data) => {
         duration: scaleTicks(note.durationTicks),
         vel: +note.velocity.toFixed(2),
         selected: index === 0,
+        playing: false,
     }));
 };

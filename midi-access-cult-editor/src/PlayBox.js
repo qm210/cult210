@@ -1,13 +1,17 @@
 import React from 'react';
 import {useRecoilState} from 'recoil';
-import styled from 'styled-components';
+import {useAnimationFrame} from './CustomHooks';
 import WebMidi from 'webmidi';
 import * as Store from './Store';
+import {SpinBox} from './components/SharedComponents';
 
 const PlayBox = () => {
     const {state, dispatch} = Store.useStore();
-    const [message, setMessage] = React.useState('lel');
+    const [isPlaying, setPlaying] = React.useState(false);
+    const [playBeat, setPlayBeat] = React.useState(0);
     const [midiOutput, setMidiOutput] = React.useState(null);
+
+    const webMidiTime = React.useRef(WebMidi.time);
 
     React.useEffect(() => {
         WebMidi.enable(err => {
@@ -15,13 +19,33 @@ const PlayBox = () => {
             console.log(WebMidi.inputs);
             console.log(WebMidi.outputs);
             if (WebMidi.outputs) {
-                setMidiOutput(WebMidi.outputs.slice(-1)[0]);
+                setMidiOutput(WebMidi.getOutputByName("USB MIDI Interface") || WebMidi.outputs[0]);
             }
         });
     }, []);
 
+    useAnimationFrame(millisecondDelta => {
+        const beatDelta = millisecondDelta * state.header.bpm / 6e4;
+        setPlayBeat(prevBeat => (prevBeat + beatDelta) % state.header.beats);
+    }, isPlaying);
+
+    const PlayHandler = (event) => {
+        if (isPlaying) {
+            setPlaying(false);
+            return;
+        }
+        setPlaying(true);
+        /*
+        midiOutput.playNote("C3");
+                setTimeout(() => {
+                    midiOutput.stopNote("C3");
+                }, 1000);
+        */
+       return null;
+    };
+
     if (!midiOutput) {
-        return <h3>No Shit</h3>
+        return <h3>WebMidi not enabled yet.</h3>
     }
 
     if (!WebMidi.outputs) {
@@ -36,7 +60,9 @@ const PlayBox = () => {
             >
             {WebMidi.outputs.filter(output => output.state == 'connected')
                 .map(output =>
-                    <option value={output.id}>
+                    <option
+                        key={output.id}
+                        value={output.id}>
                         {output.name}
                     </option>
                 )
@@ -45,16 +71,13 @@ const PlayBox = () => {
 
         <button
             disabled={midiOutput == null}
-            onClick={() => {
-                midiOutput.playNote("C3");
-                setTimeout(() => {
-                    midiOutput.stopNote("C3");
-                }, 1000);
-            }}
-            >
-            Play
+            onClick={PlayHandler}>
+            {isPlaying ? "Stop" : "Play"}
         </button>
-        <h6>{WebMidi.time}</h6>
+
+        <div>
+        BPM: <SpinBox value={state.header.bpm}/> {playBeat.toFixed(3)} - {webMidiTime.current}
+        </div>
     </>;
 };
 

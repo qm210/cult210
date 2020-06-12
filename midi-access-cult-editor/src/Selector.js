@@ -2,40 +2,13 @@ import React from 'react';
 import {useRecoilState} from 'recoil';
 import * as Store from './Store';
 import {loadMidiTrack} from './StoreLogic';
-import styled from 'styled-components';
-
-const LargeCheckBox = props =>
-    <input type="checkbox" {...props} style={{
-        width: 20,
-        height: 20,
-        marginRight: 10,
-    }}/>;
-
-const ChannelSpinBox = props =>
-    <input type="number"
-        value={props.value}
-        onChange={props.onChange}
-        min={0}
-        max={15}
-        required
-        disabled={props.value == null}
-        style={{
-            height: 20
-        }}
-    />;
-
-const RedButton = styled.button`
-    background-color: #800010;
-    font-size: 20;
-`
-const DebugButton = (props) => <RedButton {...props}>DEBUG</RedButton>;
+import {LargeCheckBox, ChannelSpinBox, DebugButton} from './components/SharedComponents';
 
 const Selector = () => {
     const {state, dispatch} = Store.useStore();
     const {midiStore, tracks} = state;
 
-    const [storedTrackName, setStoredTrackName] = useRecoilState(Store.trackName);
-    const [storedNoteName, setStoredNoteName] = useRecoilState(Store.noteName);
+    const [, setStoredTrackName] = useRecoilState(Store.trackName);
 
     return <>
         <ul>

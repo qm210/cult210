@@ -2,115 +2,9 @@ import React from 'react';
 import {useRecoilState} from 'recoil';
 import * as ReactDnd from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
-import styled from 'styled-components';
+import {geometry, RollDiv, KeyRow, Beat, Bar, Note, NoteType} from './components/PianoComponents';
+import {NOTES} from './NoteUtils';
 import * as Store from './Store';
-
-const BASE_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const isBlack = note => note.includes('#');
-
-const NOTES = [];
-for (let octave = -1; octave < 10; octave++) {
-    BASE_NOTES.forEach(note => NOTES.push(`${note}${octave}`));
-}
-
-const geometry = {
-    pianoWidth: 27,
-    beatWidth: 210,
-    pianoHeight: 9,
-};
-geometry.totalHeight = geometry.pianoHeight * NOTES.length;
-
-const Key = styled.div`
-    width: ${geometry.pianoWidth}px;
-    border: 1px solid black;
-    background-color: ${props => props.black ? 'black' : 'white'};
-    color: ${props => props.black ? 'white' : 'black'};
-    font-size: .55rem;
-    font-weight: bold;
-    line-height: ${geometry.pianoHeight - 3}px;
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-`
-
-const KeyRowDiv = styled.div`
-    width: ${props => props.width}px;
-    border-bottom: 1px solid black;
-    background-color: ${props => props.black ? '#101010C0' : '#00500080'};
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-`
-
-const KeyRow = ({note, width, someCenterRef}) =>
-    <KeyRowDiv black={isBlack(note)} width={width}>
-        <Key black={isBlack(note)} ref={note === 'A6' ? someCenterRef : null}>
-            {note}
-        </Key>
-    </KeyRowDiv>;
-
-const Frame = styled.div`
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    position: absolute;
-    width: ${props => props.width ? props.width + 'px' : '100%'};
-    height: ${props => props.height || geometry.totalHeight}px;
-    top: ${props => props.top || 0}px;
-    left: ${props => props.left || 0}px;
-    border-right: 1px solid ${props => props.color || 'black'};
-`
-
-const NoteFrame = styled(Frame)`
-    height: ${geometry.pianoHeight}px;
-    ${props => `
-        top: ${geometry.totalHeight - (props.note.pitch + 1) * geometry.pianoHeight - 1}px;
-        left: ${geometry.pianoWidth + props.note.start * geometry.beatWidth}px;
-        width: ${props.note.duration * geometry.beatWidth - 1}px;
-        background-color: hsla(${props.color}, 100%, ${props.note.selected ? 60 : 50}%, ${props.trackSelected ? 100 : 50}%);
-        border: 1px solid hsla(${props.color}, 100%, ${props.note.selected ? 100 : 50}%, 50%);
-    `}
-    border-radius: 2px;
-`
-const NoteType = 'Note';
-const Note = (props) => {
-    const {note} = props;
-    const [{isDragging}, drag] = ReactDnd.useDrag({
-        item: {...note, type: NoteType},
-        collect: (monitor) => ({
-            isDragging: monitor.isDragging(),
-        })
-    });
-    return isDragging ? <div ref={drag}/> :
-        <NoteFrame
-            ref={drag}
-            {...props}
-        />;
-};
-
-const barColor = '#008000';
-
-const Bar = styled(Frame)`
-    width: ${props => props.width}px;
-    left: ${props => props.index * props.width + (props.offset || 0)}px;
-    border-right: 1px dashed ${barColor};
-`
-
-const Beat = styled(Frame)`
-    width: ${geometry.beatWidth}px;
-    left: ${props => geometry.pianoWidth + props.index * geometry.beatWidth}px;
-    border-right: 2px solid ${barColor};
-`
-
-const RollDiv = styled.div`
-    min-width: 60vw;
-    border: 2px solid black;
-    border-radius: 4px;
-    background-color: #242;
-    height: 80vh;
-    overflow: scroll;
-    position: relative;
-`
 
 const quantX = 1/32;
 const quantY = 1;
@@ -135,16 +29,11 @@ const Roll = (props) => {
         {props.children}
     </RollDiv>
 };
-// TODO: think about React.memo()..? - custom "track hash" equality check..?
 
 const PianoRoll = () => {
     const {state, dispatch} = Store.useStore();
-    const [global] = React.useState({
-        beats: 4,
-        barsInBeat: 4,
-    });
-    const barWidth = React.useMemo(() => geometry.beatWidth / global.barsInBeat, [global]);
-    const rowWidth = React.useMemo(() => geometry.pianoWidth + global.beats * geometry.beatWidth, [global]);
+    const barWidth = geometry.beatWidth / state.header.barsInBeat;
+    const rowWidth = geometry.pianoWidth + state.header.beats * geometry.beatWidth;
     const someCenterRef = React.useRef();
 
     React.useEffect(() => {
@@ -154,7 +43,7 @@ const PianoRoll = () => {
         }
     }, [state.selected]);
 
-    const [storedTrackName, setStoredTrackName] = useRecoilState(Store.trackName);
+    const [storedTrackName] = useRecoilState(Store.trackName);
     const [storedNoteName, setStoredNoteName] = useRecoilState(Store.noteName);
 
     return <>
@@ -169,11 +58,11 @@ const PianoRoll = () => {
                         someCenterRef={someCenterRef}
                     />
                 )}
-                {[...Array(global.beats).keys()].map((beat) =>
+                {[...Array(state.header.beats).keys()].map((beat) =>
                     <Beat
                         key={beat}
                         index={beat}>
-                        {[...Array(global.barsInBeat).keys()].map((bar) =>
+                        {[...Array(state.header.barsInBeat).keys()].map((bar) =>
                             <Bar key={bar} index={bar} width={barWidth}/>
                         )}
                     </Beat>

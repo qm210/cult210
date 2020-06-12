@@ -12,6 +12,11 @@ const initialState = {
         type: null,
         data: {}
     },
+    header: {
+        bpm: 120,
+        beats: 4,
+        barsInBeat: 4,
+    },
     selectedTrackName: null,
 };
 
@@ -25,7 +30,7 @@ const Track = (name) => ({
     channel: 0,
 });
 
-export const [RESET, LOAD_MIDISTORE, LOAD_TRACK_FROM_MIDI, SET_ACTIVE_NOTES,
+export const [RESET, LOAD_MIDISTORE, LOAD_TRACK_FROM_MIDI, SET_ACTIVE_NOTES, SET_HEADER,
     UPDATE_NOTE, SELECT_TRACK_BY_NAME, TOGGLE_TRACK, SET_TRACK_CHANNEL] = Array.from(Array(99).keys());
 
 const reducer = (state, action) => {
@@ -64,6 +69,15 @@ const reducer = (state, action) => {
                 },
                 tracks: updatedTracks,
                 selectedTrackName: action.payload.track,
+            };
+
+        case SET_HEADER:
+            return {
+                ...state,
+                header: {
+                    ...state.header,
+                    ...action.payload
+                }
             };
 
         case UPDATE_NOTE:
