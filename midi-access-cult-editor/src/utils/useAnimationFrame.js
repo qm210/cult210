@@ -1,16 +1,14 @@
 import React from 'react';
 
 // props to https://css-tricks.com/using-requestanimationframe-with-react-hooks/ !!
-export const useAnimationFrame = (callback, isRunning) => {
+export const useAnimationFrame = (callback, isRunning, bpm) => {
     const request = React.useRef();
     const prevTime = React.useRef();
-
-    const usedCallback = React.useCallback(callback, []);
 
     React.useEffect(() => {
         const animate = (time) => {
             if (isRunning && prevTime.current !== undefined) {
-                usedCallback(time - prevTime.current);
+                callback(time - prevTime.current);
             }
             prevTime.current = time;
             request.current = requestAnimationFrame(animate);
@@ -18,5 +16,7 @@ export const useAnimationFrame = (callback, isRunning) => {
 
         request.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(request.current);
-    }, [usedCallback, isRunning]);
+    }, [callback, isRunning]);
 };
+
+export default useAnimationFrame;

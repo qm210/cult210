@@ -1,40 +1,46 @@
 import React from 'react';
-import {useRecoilState} from 'recoil';
-import {useAnimationFrame} from './CustomHooks';
+import * as Recoil from 'recoil';
 import WebMidi from 'webmidi';
-import * as Store from './Store';
-import {SpinBox} from './components/SharedComponents';
+import {useAnimationFrame} from './utils/useAnimationFrame';
+import * as State from './state';
+import {SpinBox, DebugButton} from './components';
 
 const PlayBox = () => {
-    const {state, dispatch} = Store.useStore();
-    const [isPlaying, setPlaying] = React.useState(false);
-    const [playBeat, setPlayBeat] = React.useState(0);
-    const [midiOutput, setMidiOutput] = React.useState(null);
+    const [midiOut, setMidiOut] = Recoil.useRecoilState(State.midiOut);
+    const [playState, setPlayState] = Recoil.useRecoilState(State.playState);
+    const [session, setSession] = Recoil.useRecoilState(State.session);
+    const tracks = Recoil.useRecoilValue(State.tracks);
 
     const webMidiTime = React.useRef(WebMidi.time);
 
     React.useEffect(() => {
         WebMidi.enable(err => {
             console.log(err ? "Webmidi failed! " + err : "Webmidi enabled!");
-            console.log(WebMidi.inputs);
-            console.log(WebMidi.outputs);
             if (WebMidi.outputs) {
-                setMidiOutput(WebMidi.getOutputByName("USB MIDI Interface") || WebMidi.outputs[0]);
+                setMidiOut(WebMidi.getOutputByName("USB MIDI Interface") || WebMidi.outputs[0]);
             }
         });
-    }, []);
+    }, [setMidiOut]);
 
-    useAnimationFrame(millisecondDelta => {
-        const beatDelta = millisecondDelta * state.header.bpm / 6e4;
-        setPlayBeat(prevBeat => (prevBeat + beatDelta) % state.header.beats);
-    }, isPlaying);
+    const animationCallback = React.useCallback(millisecondDelta => {
+        const beatDelta = millisecondDelta * session.bpm / 6e4;
+        setPlayState(state => ({
+            ...state,
+            beat: (state.beat + beatDelta) % session.beats
+        }));
+    }, [setPlayState, session]);
 
-    const PlayHandler = (event) => {
-        if (isPlaying) {
-            setPlaying(false);
+    useAnimationFrame(animationCallback, playState.playing);
+
+    const PlayHandler = React.useCallback(event => {
+        if (playState.playing) {
+            setPlayState({
+                beat: 0,
+                playing: false
+            });
             return;
         }
-        setPlaying(true);
+        setPlayState(state => ({...state, playing: true}));
         /*
         midiOutput.playNote("C3");
                 setTimeout(() => {
@@ -42,9 +48,9 @@ const PlayBox = () => {
                 }, 1000);
         */
        return null;
-    };
+    }, [playState, setPlayState]);
 
-    if (!midiOutput) {
+    if (!midiOut) {
         return <h3>WebMidi not enabled yet.</h3>
     }
 
@@ -53,12 +59,12 @@ const PlayBox = () => {
     }
 
     return <>
-        <h2>state.tracks.length: {state.tracks.length}</h2>
+        <h2>tracks.length: {tracks.length}</h2>
         <select
-            value={midiOutput.id}
-            onChange={event => setMidiOutput(WebMidi.getOutputById(event.value.target))}
+            value={midiOut.id}
+            onChange={event => setMidiOut(WebMidi.getOutputById(event.value.target))}
             >
-            {WebMidi.outputs.filter(output => output.state == 'connected')
+            {WebMidi.outputs.filter(output => output.state === 'connected')
                 .map(output =>
                     <option
                         key={output.id}
@@ -70,14 +76,23 @@ const PlayBox = () => {
         </select>
 
         <button
-            disabled={midiOutput == null}
+            disabled={midiOut == null}
             onClick={PlayHandler}>
-            {isPlaying ? "Stop" : "Play"}
+            {playState.playing ? "Stop" : "Play"}
         </button>
 
         <div>
-        BPM: <SpinBox value={state.header.bpm}/> {playBeat.toFixed(3)} - {webMidiTime.current}
+            BPM:&nbsp;
+            <SpinBox
+                step={.01}
+                value={session.bpm}
+                onChange={event => setSession({...session, bpm: event.target.value})}
+            />
+            <b style={{marginLeft: 12}}>
+                {playState.beat.toFixed(3)} - {webMidiTime.current.toFixed(3)}
+            </b>
         </div>
+        <DebugButton onClick={() => console.log(session)}/>
     </>;
 };
 

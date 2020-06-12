@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDnd from 'react-dnd';
 import styled from 'styled-components';
-import {NOTES, isBlack} from '../NoteUtils';
+import {NOTES, isBlack} from '../utils/NoteUtils';
 
 export const geometry = {
     pianoWidth: 27,
@@ -39,7 +39,9 @@ export const KeyRow = ({note, width, someCenterRef}) =>
         </Key>
     </KeyRowDiv>;
 
-export const Frame = styled.div`
+export const Frame = styled.div.attrs(props => ({
+    // TODO: do something right in here...
+}))`
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
@@ -48,9 +50,24 @@ export const Frame = styled.div`
     height: ${props => props.height || geometry.totalHeight}px;
     top: ${props => props.top || 0}px;
     left: ${props => props.left || 0}px;
-    border-right: 1px solid ${props => props.color || 'black'};
+    border-right: ${props => `${props.lineWidth || 1}px solid ${props.color || 'black'}`};
 `
 
+/*
+export const Frame = styled.div.attrs(props => ({
+    width: props.width ? props.width : '100%',
+    height: props.height || geometry.totalHeight,
+    top: props.top || 0,
+    left: props.left || 0,
+    borderRightWidth: props.lineWidth || 1,
+    borderRightColor: props.color || 'black',
+}))`
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    position: absolute;
+`;
+*/
 export const NoteFrame = styled(Frame)`
     height: ${geometry.pianoHeight}px;
     ${props => `
@@ -62,6 +79,7 @@ export const NoteFrame = styled(Frame)`
     `}
     border-radius: 2px;
 `
+
 export const NoteType = 'Note';
 export const Note = (props) => {
     const {note} = props;
@@ -82,7 +100,7 @@ export const barColor = '#008000';
 
 export const Bar = styled(Frame)`
     width: ${props => props.width}px;
-    left: ${props => props.index * props.width + (props.offset || 0)}px;
+    left: ${props => props.index * props.width}px;
     border-right: 1px dashed ${barColor};
 `
 
@@ -91,6 +109,16 @@ export const Beat = styled(Frame)`
     left: ${props => geometry.pianoWidth + props.index * geometry.beatWidth}px;
     border-right: 2px solid ${barColor};
 `
+
+export const PlayBar = ({state}) =>
+    state.playing
+        ? <Frame
+            left={state.beat * geometry.beatWidth}
+            width={geometry.pianoWidth}
+            lineWidth={2}
+            color="red"/>
+        : null;
+
 
 export const RollDiv = styled.div`
     min-width: 60vw;

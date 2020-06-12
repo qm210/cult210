@@ -12,6 +12,7 @@ export const ChannelSpinBox = props =>
     <SpinBox {...props}
         min={0}
         max={15}
+        style={{width: 36}}
     />;
 
 export const SpinBox = props =>
@@ -20,7 +21,11 @@ export const SpinBox = props =>
         required
         disabled={props.value == null}
         style={{
-            height: 20
+            width: 70,
+            height: 20,
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            ...props.style,
         }}
     />;
 
