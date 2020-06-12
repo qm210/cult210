@@ -10,10 +10,18 @@ export const LargeCheckBox = props =>
 
 export const ChannelSpinBox = props =>
     <SpinBox {...props}
-        min={0}
-        max={15}
+        min={1}
+        max={16}
         style={{width: 36}}
     />;
+
+export const TransposeSpinBox = props =>
+    <SpinBox {...props}
+        min={-8}
+        max={8}
+        style={{width: 36}}
+    />;
+
 
 export const SpinBox = props =>
     <input type="number"

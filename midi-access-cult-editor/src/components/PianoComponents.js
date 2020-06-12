@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDnd from 'react-dnd';
+import * as ReactDnd from 'react-dnd';
 import styled from 'styled-components';
 import {NOTES, isBlack} from '../utils/NoteUtils';
 
@@ -55,19 +55,22 @@ export const Frame = styled.div.attrs(props => ({
 
 /*
 export const Frame = styled.div.attrs(props => ({
-    width: props.width ? props.width : '100%',
-    height: props.height || geometry.totalHeight,
-    top: props.top || 0,
-    left: props.left || 0,
-    borderRightWidth: props.lineWidth || 1,
-    borderRightColor: props.color || 'black',
-}))`
+    style: {
+        width: props.width ? props.width : '100%',
+        height: props.height || geometry.totalHeight,
+        top: props.top || 0,
+        left: props.left || 0,
+        borderRightWidth: props.lineWidth || 1,
+        borderRightColor: props.color || 'black',
+        borderRightStyle: 'solid',
+    }}))`
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     position: absolute;
 `;
 */
+
 export const NoteFrame = styled(Frame)`
     height: ${geometry.pianoHeight}px;
     ${props => `
@@ -115,8 +118,8 @@ export const PlayBar = ({state}) =>
         ? <Frame
             left={state.beat * geometry.beatWidth}
             width={geometry.pianoWidth}
-            lineWidth={2}
-            color="red"/>
+            lineWidth={3}
+            color="#AF06"/>
         : null;
 
 

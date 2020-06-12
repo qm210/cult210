@@ -21,5 +21,6 @@ export const newTrack = (name) => ({
     patterns: [], // unused yet
     notes: [],
     hue: Math.floor(360 * Math.random()),
-    channel: 0,
+    channel: 1,
+    transposeOctaves: 0,
 });

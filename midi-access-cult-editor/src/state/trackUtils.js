@@ -27,18 +27,13 @@ export const updateTrackFromMidi = (setTracks, payload) =>
         )
     );
 
-export const setTrackChannel = (setTracks, {trackName, channel}) =>
+export const updateTrack = (setTracks, trackName, update) =>
     setTracks(tracks =>
         tracks.map(track =>
-            track.name === trackName ? {...track, channel}: track
+            track.name === trackName
+                ? {...track, ...update}
+                : track
     ));
-
-
-export const toggleTrack = (setTracks, {trackName, nowActive}) =>
-    setTracks(tracks =>
-        tracks.map(track =>
-            track.name === trackName ? {...track, active: nowActive} : track
-        ));
 
 export const updateNote = (setTracks, trackName, noteUpdate) =>
     setTracks(tracks =>

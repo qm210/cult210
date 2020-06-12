@@ -1,8 +1,8 @@
 import React from 'react';
 import * as Recoil from 'recoil';
-import Midi from '@tonejs/midi';
+import {Midi} from '@tonejs/midi';
 import * as State from './state';
-import {LargeCheckBox, ChannelSpinBox} from './components';
+import {LargeCheckBox, TransposeSpinBox, ChannelSpinBox} from './components';
 
 const Selector = () => {
     const [tracks, setTracks] = Recoil.useRecoilState(State.tracks);
@@ -26,13 +26,19 @@ const Selector = () => {
             <li key={index}>
                 <LargeCheckBox
                     checked={track.active}
-                    onChange={event => State.toggleTrack(setTracks, {track, value: event.target.value})}
+                    onChange={event => State.updateTrack(setTracks, track.name, {active: event.target.value})}
                 />
-                <b>{track.name}</b>:
-                channel <ChannelSpinBox
-                    value={track.channel}
-                    onChange={event => State.setTrackChannel(setTracks, {track, value: event.target.value})}
-                />
+                <b>{track.name}</b>
+                <span style={{float: 'right'}}>
+                    oct <TransposeSpinBox
+                        value={track.transposeOctaves}
+                        onChange={event => State.updateTrack(setTracks, track.name, {transposeOctaves: event.target.value})}
+                    />
+                    channel <ChannelSpinBox
+                        value={track.channel}
+                        onChange={event => State.updateTrack(setTracks, track.name, {channel: event.target.value})}
+                    />
+                </span>
                 <div>
                     {midiStore[track.name]
                         ? midiStore[track.name].map((midi, mIndex) =>

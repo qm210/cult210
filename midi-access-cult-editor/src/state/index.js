@@ -7,7 +7,13 @@ export const session = Recoil.atom({
         bpm: 210,
         beats: 4,
         barsInBeat: 4,
+        resetOnStop: true,
 }});
+
+export const msPerBeat = Recoil.selector({
+    key: 'msPerBeat',
+    get: ({get}) => 6e4 / get(session).bpm
+})
 
 export const tracks = Recoil.atom({
     key: 'tracks',

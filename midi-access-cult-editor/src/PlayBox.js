@@ -9,7 +9,8 @@ const PlayBox = () => {
     const [midiOut, setMidiOut] = Recoil.useRecoilState(State.midiOut);
     const [playState, setPlayState] = Recoil.useRecoilState(State.playState);
     const [session, setSession] = Recoil.useRecoilState(State.session);
-    const tracks = Recoil.useRecoilValue(State.tracks);
+    const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
+    const msPerBeat = Recoil.useRecoilValue(State.msPerBeat);
 
     const webMidiTime = React.useRef(WebMidi.time);
 
@@ -23,32 +24,41 @@ const PlayBox = () => {
     }, [setMidiOut]);
 
     const animationCallback = React.useCallback(millisecondDelta => {
-        const beatDelta = millisecondDelta * session.bpm / 6e4;
+        const beatDelta = millisecondDelta / msPerBeat;
+        const beat = (playState.beat + beatDelta) % session.beats;
+        activeTracks.forEach(track => {
+            const notesToPlay = track.notes.filter(note =>
+                note.start >= beat && note.start < beat + beatDelta
+            );
+            notesToPlay.forEach(note => {
+                console.log(note, track.channel, note.duration * msPerBeat);
+                midiOut.playNote(note.pitch + 12 * track.transposeOctaves, track.channel, {
+                    duration: note.duration * 10 * msPerBeat,
+                }); //, track.channel, {
+//                    duration: note.duration * msPerBeat
+  //              });
+                midiOut.stopNote(note.pitch);
+            })
+        });
+
         setPlayState(state => ({
             ...state,
             beat: (state.beat + beatDelta) % session.beats
         }));
-    }, [setPlayState, session]);
+    }, [setPlayState, session.beats, msPerBeat, midiOut, playState, activeTracks]);
 
     useAnimationFrame(animationCallback, playState.playing);
 
     const PlayHandler = React.useCallback(event => {
         if (playState.playing) {
-            setPlayState({
-                beat: 0,
+            setPlayState(state => ({
+                beat: session.resetOnStop ? 0 : state.beat,
                 playing: false
-            });
+            }));
             return;
         }
         setPlayState(state => ({...state, playing: true}));
-        /*
-        midiOutput.playNote("C3");
-                setTimeout(() => {
-                    midiOutput.stopNote("C3");
-                }, 1000);
-        */
-       return null;
-    }, [playState, setPlayState]);
+    }, [playState, setPlayState, session.resetOnStop]);
 
     if (!midiOut) {
         return <h3>WebMidi not enabled yet.</h3>
@@ -59,7 +69,7 @@ const PlayBox = () => {
     }
 
     return <>
-        <h2>tracks.length: {tracks.length}</h2>
+        <span style={{marginBottom: 12}}>activeTracks.length: {activeTracks.length}</span>
         <select
             value={midiOut.id}
             onChange={event => setMidiOut(WebMidi.getOutputById(event.value.target))}
@@ -81,7 +91,7 @@ const PlayBox = () => {
             {playState.playing ? "Stop" : "Play"}
         </button>
 
-        <div>
+        <div style={{marginBottom: 20}}>
             BPM:&nbsp;
             <SpinBox
                 step={.01}
