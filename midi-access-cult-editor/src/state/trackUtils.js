@@ -53,7 +53,6 @@ export const updateTrackFromMidi = (setTracks, payload) =>
     );
 
 export const updateTrack = (setTracks, trackName, update) => {
-    console.log("updateTrack with update:", update);
     setTracks(tracks =>
         tracks.map(track =>
             track.name === trackName

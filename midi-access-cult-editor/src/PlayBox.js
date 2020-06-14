@@ -26,24 +26,10 @@ const PlayBox = () => {
 
     const animationCallback = React.useCallback(millisecondDelta => {
         const beatDelta = millisecondDelta / msPerBeat;
-        const beat = (playState.beat + beatDelta) % session.beats;
-        /* // mode: load every note in the tick it is due
-        activeTracks.forEach(track => {
-            const notesToPlay = track.notes.filter(note =>
-                note.start >= beat && note.start < beat + beatDelta
-            );
-            notesToPlay.forEach(note => {
-                midiOut.playNote(note.pitch + 12 * track.transposeOctaves, track.channel, {
-                    duration: note.duration * msPerBeat,
-                    velocity: note.velocity
-                });
-                //midiOut.stopNote(note.pitch);
-            })
-        });
-        */
-
-        // mode: load complete pattern at first beat
-        if (beat < beatDelta) {
+        let beat = (WebMidi.time - playState.midiTimeAtStart) / msPerBeat;
+        console.log(beat, playState.atStart);
+        if (playState.atStart) {
+            beat = beat % session.beats;
             activeTracks.forEach(track => {
                 track.notes.forEach(note => {
                     const notePitch = note.pitch + 12 * track.transposeOctaves;
@@ -58,12 +44,15 @@ const PlayBox = () => {
                     }
                 })
             })
+            setPlayState(state => ({...state,
+                atStart: false
+            }));
         }
-
-        setPlayState(state => ({
-            ...state,
-            beat: (state.beat + beatDelta) % session.beats
-        }));
+        else if (beat > session.beats) {
+            setPlayState(state => ({...state,
+                atStart: true
+            }));
+        }
     }, [setPlayState, session.beats, msPerBeat, midiOut, playState, activeTracks]);
 
     useAnimationFrame(animationCallback, playState.playing);
@@ -77,7 +66,12 @@ const PlayBox = () => {
             NOTES.forEach(note => midiOut.stopNote(note));
             return;
         }
-        setPlayState(state => ({...state, playing: true}));
+        setPlayState(state => ({
+            ...state,
+            playing: true,
+            atStart: true,
+            midiTimeAtStart: WebMidi.time
+        }));
     }, [playState, setPlayState, session.resetOnStop, midiOut]);
 
     if (!midiOut) {

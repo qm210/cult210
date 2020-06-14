@@ -49,6 +49,8 @@ export const playState = Recoil.atom({
     default: {
         playing: false,
         beat: 0,
+        midiTimeAtStart: 0,
+        atStart: false,
     }
 })
 
