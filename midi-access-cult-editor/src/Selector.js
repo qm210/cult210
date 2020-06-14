@@ -26,7 +26,7 @@ const Selector = () => {
             <li key={index}>
                 <LargeCheckBox
                     checked={track.active}
-                    onChange={event => State.updateTrack(setTracks, track.name, {active: event.target.value})}
+                    onChange={event => State.updateTrack(setTracks, track.name, {active: event.target.checked})}
                 />
                 <b>{track.name}</b>
                 <span style={{float: 'right'}}>

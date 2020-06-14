@@ -4,6 +4,7 @@ import WebMidi from 'webmidi';
 import {useAnimationFrame} from './utils/useAnimationFrame';
 import * as State from './state';
 import {SpinBox, DebugButton} from './components';
+import {NOTES} from './utils/NoteUtils';
 
 const PlayBox = () => {
     const [midiOut, setMidiOut] = Recoil.useRecoilState(State.midiOut);
@@ -26,6 +27,7 @@ const PlayBox = () => {
     const animationCallback = React.useCallback(millisecondDelta => {
         const beatDelta = millisecondDelta / msPerBeat;
         const beat = (playState.beat + beatDelta) % session.beats;
+        /* // mode: load every note in the tick it is due
         activeTracks.forEach(track => {
             const notesToPlay = track.notes.filter(note =>
                 note.start >= beat && note.start < beat + beatDelta
@@ -35,9 +37,28 @@ const PlayBox = () => {
                     duration: note.duration * msPerBeat,
                     velocity: note.velocity
                 });
-                midiOut.stopNote(note.pitch);
+                //midiOut.stopNote(note.pitch);
             })
         });
+        */
+
+        // mode: load complete pattern at first beat
+        if (beat < beatDelta) {
+            activeTracks.forEach(track => {
+                track.notes.forEach(note => {
+                    const notePitch = note.pitch + 12 * track.transposeOctaves;
+                    if (notePitch < 0 || notePitch > 127) {
+                        console.warn(`can't play note ${notePitch}`);
+                    } else {
+                        midiOut.playNote(notePitch, track.channel, {
+                            time: '+' + note.start * msPerBeat,
+                            duration: note.duration * msPerBeat,
+                            velocity: note.velocity
+                        })
+                    }
+                })
+            })
+        }
 
         setPlayState(state => ({
             ...state,
@@ -53,10 +74,11 @@ const PlayBox = () => {
                 beat: session.resetOnStop ? 0 : state.beat,
                 playing: false
             }));
+            NOTES.forEach(note => midiOut.stopNote(note));
             return;
         }
         setPlayState(state => ({...state, playing: true}));
-    }, [playState, setPlayState, session.resetOnStop]);
+    }, [playState, setPlayState, session.resetOnStop, midiOut]);
 
     if (!midiOut) {
         return <h3>WebMidi not enabled yet.</h3>
