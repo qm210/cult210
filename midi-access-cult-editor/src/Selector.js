@@ -2,13 +2,14 @@ import React from 'react';
 import * as Recoil from 'recoil';
 import {Midi} from '@tonejs/midi';
 import * as State from './state';
-import {LargeCheckBox, TransposeSpinBox, ChannelSpinBox} from './components';
+import {LargeCheckBox, TransposeSpinBox, ChannelSpinBox, DebugButton} from './components';
 
 const Selector = () => {
     const [tracks, setTracks] = Recoil.useRecoilState(State.tracks);
     const midiStore = Recoil.useRecoilValue(State.midiStore);
     const setLatestTrack = Recoil.useSetRecoilState(State.latestTrack);
     const setSelectedTrackName = Recoil.useSetRecoilState(State.selectedTrackName);
+    const activeTracks = Recoil.useRecoilValue(State.activeTracks);
 
     const loadTrackFromMidi = async (midi) => {
         const midiUrl = `/midis/${midi.filename}`;
@@ -21,7 +22,8 @@ const Selector = () => {
         setSelectedTrackName(midi.track);
     };
 
-    return <ul>
+    return <>
+        <ul>
         {tracks.map((track, index) =>
             <li key={index}>
                 <LargeCheckBox
@@ -56,7 +58,9 @@ const Selector = () => {
                 </div>
             </li>
         )}
-    </ul>
+        </ul>
+        <DebugButton onClick={() => console.log(JSON.stringify(activeTracks))}/>
+    </>
 };
 
 export default Selector;

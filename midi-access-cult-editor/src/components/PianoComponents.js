@@ -39,9 +39,7 @@ export const KeyRow = ({note, width, someCenterRef}) =>
         </Key>
     </KeyRowDiv>;
 
-export const Frame = styled.div.attrs(props => ({
-    // TODO: do something right in here...
-}))`
+export const Frame = styled.div`
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
@@ -52,24 +50,6 @@ export const Frame = styled.div.attrs(props => ({
     left: ${props => props.left || 0}px;
     border-right: ${props => `${props.lineWidth || 1}px solid ${props.color || 'black'}`};
 `
-
-/*
-export const Frame = styled.div.attrs(props => ({
-    style: {
-        width: props.width ? props.width : '100%',
-        height: props.height || geometry.totalHeight,
-        top: props.top || 0,
-        left: props.left || 0,
-        borderRightWidth: props.lineWidth || 1,
-        borderRightColor: props.color || 'black',
-        borderRightStyle: 'solid',
-    }}))`
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    position: absolute;
-`;
-*/
 
 export const NoteFrame = styled(Frame)`
     height: ${geometry.pianoHeight}px;
@@ -116,10 +96,12 @@ export const Beat = styled(Frame)`
 export const PlayBar = ({state}) =>
     state.playing
         ? <Frame
-            left={state.beat * geometry.beatWidth}
-            width={geometry.pianoWidth}
             lineWidth={3}
-            color="#AF06"/>
+            color="#AF06"
+            style={{
+                left: state.beat * geometry.beatWidth,
+                width: geometry.pianoWidth,
+            }}/>
         : null;
 
 

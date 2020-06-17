@@ -1,7 +1,7 @@
 import React from 'react';
 
 // props to https://css-tricks.com/using-requestanimationframe-with-react-hooks/ !!
-export const useAnimationFrame = (callback, isRunning, bpm) => {
+export const useAnimationFrame = (callback, isRunning) => {
     const request = React.useRef();
     const prevTime = React.useRef();
 

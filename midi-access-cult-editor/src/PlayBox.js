@@ -10,68 +10,78 @@ const PlayBox = () => {
     const [midiOut, setMidiOut] = Recoil.useRecoilState(State.midiOut);
     const [playState, setPlayState] = Recoil.useRecoilState(State.playState);
     const [session, setSession] = Recoil.useRecoilState(State.session);
-    const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
-    const msPerBeat = Recoil.useRecoilValue(State.msPerBeat);
-
+    const tracks = Recoil.useRecoilValue(State.tracks);
+    //const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
+    //const msPerBeat = Recoil.useRecoilValue(State.msPerBeat);
+    const msPerBeat = 6e4 / session.bpm;
     const webMidiTime = React.useRef(WebMidi.time);
 
     React.useEffect(() => {
         WebMidi.enable(err => {
             console.log(err ? "Webmidi failed! " + err : "Webmidi enabled!");
             if (WebMidi.outputs) {
+                console.log(WebMidi.outputs);
                 setMidiOut(WebMidi.getOutputByName("USB MIDI Interface") || WebMidi.outputs[0]);
             }
         });
     }, [setMidiOut]);
 
-    const animationCallback = React.useCallback(millisecondDelta => {
-        const beatDelta = millisecondDelta / msPerBeat;
-        let beat = (WebMidi.time - playState.midiTimeAtStart) / msPerBeat;
-        console.log(beat, playState.atStart);
-        if (playState.atStart) {
-            beat = beat % session.beats;
-            activeTracks.forEach(track => {
-                track.notes.forEach(note => {
-                    const notePitch = note.pitch + 12 * track.transposeOctaves;
-                    if (notePitch < 0 || notePitch > 127) {
-                        console.warn(`can't play note ${notePitch}`);
-                    } else {
-                        midiOut.playNote(notePitch, track.channel, {
-                            time: '+' + note.start * msPerBeat,
-                            duration: note.duration * msPerBeat,
-                            velocity: note.velocity
-                        })
-                    }
-                })
+    const triggerPlayback = React.useCallback(() => {
+        if (!playState.playing) {
+            return;
+        }
+        const activeTracks = tracks.filter(track => track.active);
+        activeTracks.forEach(track => {
+            track.notes.forEach(note => {
+                const notePitch = note.pitch + 12 * track.transposeOctaves;
+                if (notePitch < 0 || notePitch > 127) {
+                    console.warn(`can't play note ${notePitch}`);
+                } else {
+                    console.log(notePitch);
+                    midiOut.playNote(notePitch, track.channel, {
+                        time: '+' + note.start * msPerBeat,
+                        duration: note.duration * msPerBeat,
+                        velocity: note.velocity
+                    })
+                }
             })
+        });
+    }, [playState.playing, midiOut, msPerBeat, tracks]);
+
+    React.useEffect(() => {
+        console.log("Triggy", WebMidi.time, playState.midiTimeAtStart);
+        if (playState.playing) {
+            triggerPlayback();
+        }
+    }, [triggerPlayback, playState.playing, playState.midiTimeAtStart]);
+
+    const animationCallback = React.useCallback(msDelta => {
+        const beat = (WebMidi.time - playState.midiTimeAtStart) / msPerBeat;
+        setPlayState(state => ({...state, beat}));
+        if (beat > session.beats) {
             setPlayState(state => ({...state,
-                atStart: false
+                midiTimeAtStart: WebMidi.time
             }));
         }
-        else if (beat > session.beats) {
-            setPlayState(state => ({...state,
-                atStart: true
-            }));
-        }
-    }, [setPlayState, session.beats, msPerBeat, midiOut, playState, activeTracks]);
+    }, [setPlayState, session.beats, playState.midiTimeAtStart, msPerBeat]);
 
     useAnimationFrame(animationCallback, playState.playing);
 
-    const PlayHandler = React.useCallback(event => {
+    const PlayHandler = React.useCallback(() => {
         if (playState.playing) {
+            NOTES.forEach(note => midiOut.stopNote(note));
             setPlayState(state => ({
                 beat: session.resetOnStop ? 0 : state.beat,
                 playing: false
             }));
-            NOTES.forEach(note => midiOut.stopNote(note));
-            return;
         }
-        setPlayState(state => ({
-            ...state,
-            playing: true,
-            atStart: true,
-            midiTimeAtStart: WebMidi.time
-        }));
+        else {
+            setPlayState(state => ({
+                ...state,
+                playing: true,
+                midiTimeAtStart: WebMidi.time
+            }));
+        }
     }, [playState, setPlayState, session.resetOnStop, midiOut]);
 
     if (!midiOut) {
@@ -83,10 +93,10 @@ const PlayBox = () => {
     }
 
     return <>
-        <span style={{marginBottom: 12}}>activeTracks.length: {activeTracks.length}</span>
+        {/*<span style={{marginBottom: 12}}>activeTracks.length: {activeTracks.length}</span>*/}
         <select
             value={midiOut.id}
-            onChange={event => setMidiOut(WebMidi.getOutputById(event.value.target))}
+            onChange={event => {setMidiOut(WebMidi.getOutputById(event.target.value))}}
             >
             {WebMidi.outputs.filter(output => output.state === 'connected')
                 .map(output =>

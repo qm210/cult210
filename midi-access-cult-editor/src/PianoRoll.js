@@ -75,7 +75,7 @@ const PianoRoll = () => {
                         />
                     )
                 )}
-                <PlayBar state={playState}/>
+                {<PlayBar state={playState}/>}
             </Roll>
         </ReactDnd.DndProvider>
     </>;

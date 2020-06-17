@@ -28,13 +28,17 @@ const midiStore = [
         track: "drums",
         filename: "miditest_drum1.mid",
     }, {
-        title: "moar hardcore",
+        title: "+ stuff",
         track: "drums",
         filename: "miditest_drum2.mid",
     }, {
-        title: "ganz schön mogulig",
+        title: "+ moar",
         track: "drums",
         filename: "miditest_drum3.mid",
+    }, {
+        title: "ganz schön mogulig",
+        track: "special",
+        filename: "poctest.mid",
     }
 ];
 
