@@ -1,8 +1,9 @@
 general:
-- [NEXT] react performance optimization
+- POC: trigger Beat every Beat?
 -- first of all: buffer coming midi events in blocks
+- make not every change replay midi
+- how to stop midi..??
 -- read: https://www.html5rocks.com/en/tutorials/audio/scheduling/
---- fix styled.div.attrib()
 --- research weird Batcher / setState warning (Recoil)
 
 ui:

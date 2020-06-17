@@ -11,6 +11,7 @@ const PlayBox = () => {
     const [playState, setPlayState] = Recoil.useRecoilState(State.playState);
     const [session, setSession] = Recoil.useRecoilState(State.session);
     const tracks = Recoil.useRecoilValue(State.tracks);
+    const [timeZero, setTimeZero] = React.useState(0);
     //const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
     //const msPerBeat = Recoil.useRecoilValue(State.msPerBeat);
     const msPerBeat = 6e4 / session.bpm;
@@ -48,22 +49,23 @@ const PlayBox = () => {
         });
     }, [playState.playing, midiOut, msPerBeat, tracks]);
 
+    React.useEffect(() => { // reset zime if anything "to play" changes..?
+        setTimeZero(WebMidi.time);
+    }, [msPerBeat, tracks]);
+
     React.useEffect(() => {
-        console.log("Triggy", WebMidi.time, playState.midiTimeAtStart);
         if (playState.playing) {
             triggerPlayback();
         }
-    }, [triggerPlayback, playState.playing, playState.midiTimeAtStart]);
+    }, [triggerPlayback, playState.playing, timeZero]);
 
     const animationCallback = React.useCallback(msDelta => {
-        const beat = (WebMidi.time - playState.midiTimeAtStart) / msPerBeat;
+        const beat = (WebMidi.time - timeZero) / msPerBeat;
         setPlayState(state => ({...state, beat}));
         if (beat > session.beats) {
-            setPlayState(state => ({...state,
-                midiTimeAtStart: WebMidi.time
-            }));
+            setTimeZero(WebMidi.time);
         }
-    }, [setPlayState, session.beats, playState.midiTimeAtStart, msPerBeat]);
+    }, [setPlayState, setTimeZero, session.beats, timeZero, msPerBeat]);
 
     useAnimationFrame(animationCallback, playState.playing);
 

@@ -8,6 +8,7 @@ export const session = Recoil.atom({
         beats: 4,
         barsInBeat: 4,
         resetOnStop: true,
+        beatBuffer: 1,
 }});
 
 export const msPerBeat = Recoil.selector({
@@ -49,8 +50,6 @@ export const playState = Recoil.atom({
     default: {
         playing: false,
         beat: 0,
-        midiTimeAtStart: 0,
-        atStart: false,
     }
 })
 
