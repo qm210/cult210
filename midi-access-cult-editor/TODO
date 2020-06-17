@@ -1,17 +1,30 @@
 general:
 - POC: trigger Beat every Beat?
 -- first of all: buffer coming midi events in blocks
-- make not every change replay midi
+-- make not every change replay midi instantly - rethink
 - how to stop midi..??
 -- read: https://www.html5rocks.com/en/tutorials/audio/scheduling/
 --- research weird Batcher / setState warning (Recoil)
 
 ui:
-- fix uncheck of track
-- edit midi pattern
+- edit note length
 - curve function
 
 server:
+- save changes
 - persist current state to file (session_name.cult), autosave
-- load current state to file (session_name.cult)
+- load current state from file (session_name.cult)
+
+
+
+future:
+- arrange patterns in tracks
+- save "versions" of patterns
+
+TIME VIEW:
+PAT1  [ | | |1||1||1|2|2| | | | | | | | ] --> channel? shift?
+PAT2  [3|3|3|3||3||3|3|3|1|1| | | | | | ] --> channel? shift?
+
+||1,3|| --> show these two in Piano Roll, when edited:
+||1,3*|| --> Options {Replace 3 by 3*, save 3* as 4, reset 3* to 3}
 

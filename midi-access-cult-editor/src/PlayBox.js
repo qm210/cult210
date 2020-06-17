@@ -15,9 +15,9 @@ const PlayBox = () => {
     //const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
     //const msPerBeat = Recoil.useRecoilValue(State.msPerBeat);
     const msPerBeat = 6e4 / session.bpm;
-    const webMidiTime = React.useRef(WebMidi.time);
 
-    React.useEffect(() => {
+    const webMidiRestart = React.useCallback(() => {
+        WebMidi.disable();
         WebMidi.enable(err => {
             console.log(err ? "Webmidi failed! " + err : "Webmidi enabled!");
             if (WebMidi.outputs) {
@@ -26,6 +26,10 @@ const PlayBox = () => {
             }
         });
     }, [setMidiOut]);
+
+    React.useEffect(() => {
+        webMidiRestart();
+    }, [webMidiRestart]);
 
     const triggerPlayback = React.useCallback(() => {
         if (!playState.playing) {
@@ -38,7 +42,6 @@ const PlayBox = () => {
                 if (notePitch < 0 || notePitch > 127) {
                     console.warn(`can't play note ${notePitch}`);
                 } else {
-                    console.log(notePitch);
                     midiOut.playNote(notePitch, track.channel, {
                         time: '+' + note.start * msPerBeat,
                         duration: note.duration * msPerBeat,
@@ -49,9 +52,11 @@ const PlayBox = () => {
         });
     }, [playState.playing, midiOut, msPerBeat, tracks]);
 
+    /*
     React.useEffect(() => { // reset zime if anything "to play" changes..?
         setTimeZero(WebMidi.time);
     }, [msPerBeat, tracks]);
+    */
 
     React.useEffect(() => {
         if (playState.playing) {
@@ -59,6 +64,7 @@ const PlayBox = () => {
         }
     }, [triggerPlayback, playState.playing, timeZero]);
 
+    // how to use beatBuffer != beats ??
     const animationCallback = React.useCallback(msDelta => {
         const beat = (WebMidi.time - timeZero) / msPerBeat;
         setPlayState(state => ({...state, beat}));
@@ -71,20 +77,19 @@ const PlayBox = () => {
 
     const PlayHandler = React.useCallback(() => {
         if (playState.playing) {
-            NOTES.forEach(note => midiOut.stopNote(note));
             setPlayState(state => ({
                 beat: session.resetOnStop ? 0 : state.beat,
                 playing: false
             }));
         }
         else {
+            setTimeZero(WebMidi.time);
             setPlayState(state => ({
                 ...state,
                 playing: true,
-                midiTimeAtStart: WebMidi.time
             }));
         }
-    }, [playState, setPlayState, session.resetOnStop, midiOut]);
+    }, [playState, setPlayState, session.resetOnStop, midiOut, setTimeZero]);
 
     if (!midiOut) {
         return <h3>WebMidi not enabled yet.</h3>
@@ -125,7 +130,7 @@ const PlayBox = () => {
                 onChange={event => setSession({...session, bpm: event.target.value})}
             />
             <b style={{marginLeft: 12}}>
-                {playState.beat.toFixed(3)} - {webMidiTime.current.toFixed(3)}
+                {playState.beat.toFixed(3)}
             </b>
         </div>
         <DebugButton onClick={() => console.log(session)}/>
