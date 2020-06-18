@@ -7,17 +7,37 @@ import * as State from './state';
 import {SpinBox, DebugButton} from './components';
 import {NOTES} from './utils/NoteUtils';
 
+/*
+const usePrev = (value, initVal) => {
+    const ref = React.useRef(initVal);
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
+const useTriggeredEffect = (hook, deps, trigs) => {
+    const prevTrigs = usePrev(trigs, []);
+    const trigsChanged = trigs.some((trig, index) => trig !== prevTrigs[index]);
+    React.useEffect(() => {
+        if (trigsChanged) {
+            hook();
+        }
+    }, deps.concat(trigs));
+}
+*/
+
 const PlayBox = () => {
     const [session, setSession] = useLocalStorageState('session', State.defaultSession);
     const [midiOut, setMidiOut] = Recoil.useRecoilState(State.midiOut);
     const [playState, setPlayState] = Recoil.useRecoilState(State.playState);
     const tracks = Recoil.useRecoilValue(State.tracks);
-    const [timeZero, setTimeZero] = React.useState(0);
-    const [trigger, setTrigger] = React.useState(false);
     //const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
-    //const msPerBeat = Recoil.useRecoilValue(State.msPerBeat);
-    const msPerBeat = 6e4 / session.bpm;
     const activeTracks = React.useMemo(() => tracks.filter(track => track.active), [tracks]);
+    const msPerBeat = 6e4 / session.bpm;
+    const [timeZero, setTimeZero] = React.useState(0);
+    const [beatZero, setBeatZero] = React.useState(0);
+    const trigger = React.useRef(false);
+    const [triggerFlag, setTriggerFlag] = React.useState(false);
 
     const webMidiRestart = React.useCallback(() => {
         WebMidi.disable();
@@ -34,10 +54,22 @@ const PlayBox = () => {
         webMidiRestart();
     }, [webMidiRestart]);
 
+    const notesToBuffer = React.useCallback((fromBeat) =>
+        activeTracks.reduce((accTracks, track) => [
+            ...accTracks,
+            ...track.notes.reduce((accNotes, note) => {
+                if (note.start >= fromBeat && note.start < fromBeat + session.beatBuffer) {
+                    accNotes.push({
+                        ...note,
+                        pitch: note.pitch + 12 * track.transposeOctaves,
+                        channel: track.channel,
+                    })
+                }
+                return accNotes;
+            }, [])
+        ], []), [session.beatBuffer]);
+
     const triggerPlayback = React.useCallback(() => {
-        if (!playState.playing) {
-            return;
-        }
         activeTracks.forEach(track => {
             track.notes.forEach(note => {
                 const notePitch = note.pitch + 12 * track.transposeOctaves;
@@ -52,7 +84,7 @@ const PlayBox = () => {
                 }
             })
         });
-    }, [playState.playing, midiOut, msPerBeat, activeTracks]);
+    }, [midiOut, msPerBeat, activeTracks]);
 
     /*
     React.useEffect(() => { // reset zime if anything "to play" changes..?
@@ -61,17 +93,26 @@ const PlayBox = () => {
     */
 
     React.useEffect(() => {
-        if (playState.playing) {
-            console.log("gotcha!");
-            triggerPlayback();
+        console.log("gotcha!", playState.playing, trigger.current, triggerFlag);
+        if (playState.playing && trigger.current) {
+            triggerPlayback(beatZero);
+            trigger.current = false;
+            setTriggerFlag(false);
         }
-    }, [triggerPlayback, playState.playing, timeZero]);
+    }, [triggerPlayback, playState.playing, timeZero, beatZero, trigger, triggerFlag]);
+
+    React.useEffect(() => {
+        console.log("RE!");
+        trigger.current = true;
+        setTriggerFlag(true);
+    }, [timeZero, setTriggerFlag]);
 
     // how to use beatBuffer != beats ??
     const animationCallback = React.useCallback(msDelta => {
         const beat = (WebMidi.time - timeZero) / msPerBeat;
         setPlayState(state => ({...state, beat}));
-        if (beat > session.beats) {
+        if (beat > session.beatBuffer) {
+            setBeatZero(beat);
             setTimeZero(WebMidi.time);
         }
     }, [setPlayState, setTimeZero, session.beats, timeZero, msPerBeat]);
@@ -137,7 +178,7 @@ const PlayBox = () => {
                 {playState.beat.toFixed(3)}
             </b>
         </div>
-        <DebugButton onClick={() => console.log(session)}/>
+        <DebugButton onClick={() => console.log(session, activeTracks, notesToBuffer(0))}/>
     </>;
 };
 

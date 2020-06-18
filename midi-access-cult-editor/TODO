@@ -15,7 +15,7 @@ server:
 - persist current state to file (session_name.cult), autosave
 - load current state from file (session_name.cult)
 
-
+- overwrite "midi.header.name" with the corresponding track names. I don't need to know TripleOscillator...
 
 future:
 - arrange patterns in tracks
