@@ -1,20 +1,13 @@
 import * as Recoil from 'recoil';
 export * from './trackUtils';
 
-export const session = Recoil.atom({
-    key: 'session',
-    default: {
+export const defaultSession = {
         bpm: 210,
         beats: 4,
         barsInBeat: 4,
         resetOnStop: true,
         beatBuffer: 1,
-}});
-
-export const msPerBeat = Recoil.selector({
-    key: 'msPerBeat',
-    get: ({get}) => 6e4 / get(session).bpm
-})
+};
 
 export const tracks = Recoil.atom({
     key: 'tracks',

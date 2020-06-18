@@ -9,7 +9,7 @@ const Selector = () => {
     const midiStore = Recoil.useRecoilValue(State.midiStore);
     const setLatestTrack = Recoil.useSetRecoilState(State.latestTrack);
     const setSelectedTrackName = Recoil.useSetRecoilState(State.selectedTrackName);
-    const activeTracks = Recoil.useRecoilValue(State.activeTracks);
+    const activeTracks = React.useMemo(() => tracks.filter(track => track.active), [tracks]); // Recoil.useRecoilValue() throws that shady Batcher setState() warnin...
 
     const loadTrackFromMidi = async (midi) => {
         const midiUrl = `/midis/${midi.filename}`;

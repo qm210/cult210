@@ -1,20 +1,23 @@
 import React from 'react';
 import * as Recoil from 'recoil';
 import WebMidi from 'webmidi';
-import {useAnimationFrame} from './utils/useAnimationFrame';
+import useAnimationFrame from './utils/useAnimationFrame';
+import useLocalStorageState from './utils/useLocalStorageState';
 import * as State from './state';
 import {SpinBox, DebugButton} from './components';
 import {NOTES} from './utils/NoteUtils';
 
 const PlayBox = () => {
+    const [session, setSession] = useLocalStorageState('session', State.defaultSession);
     const [midiOut, setMidiOut] = Recoil.useRecoilState(State.midiOut);
     const [playState, setPlayState] = Recoil.useRecoilState(State.playState);
-    const [session, setSession] = Recoil.useRecoilState(State.session);
     const tracks = Recoil.useRecoilValue(State.tracks);
     const [timeZero, setTimeZero] = React.useState(0);
+    const [trigger, setTrigger] = React.useState(false);
     //const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
     //const msPerBeat = Recoil.useRecoilValue(State.msPerBeat);
     const msPerBeat = 6e4 / session.bpm;
+    const activeTracks = React.useMemo(() => tracks.filter(track => track.active), [tracks]);
 
     const webMidiRestart = React.useCallback(() => {
         WebMidi.disable();
@@ -35,7 +38,6 @@ const PlayBox = () => {
         if (!playState.playing) {
             return;
         }
-        const activeTracks = tracks.filter(track => track.active);
         activeTracks.forEach(track => {
             track.notes.forEach(note => {
                 const notePitch = note.pitch + 12 * track.transposeOctaves;
@@ -50,7 +52,7 @@ const PlayBox = () => {
                 }
             })
         });
-    }, [playState.playing, midiOut, msPerBeat, tracks]);
+    }, [playState.playing, midiOut, msPerBeat, activeTracks]);
 
     /*
     React.useEffect(() => { // reset zime if anything "to play" changes..?
@@ -60,6 +62,7 @@ const PlayBox = () => {
 
     React.useEffect(() => {
         if (playState.playing) {
+            console.log("gotcha!");
             triggerPlayback();
         }
     }, [triggerPlayback, playState.playing, timeZero]);
@@ -81,6 +84,7 @@ const PlayBox = () => {
                 beat: session.resetOnStop ? 0 : state.beat,
                 playing: false
             }));
+            NOTES.forEach(note => midiOut.stopNote(note));
         }
         else {
             setTimeZero(WebMidi.time);

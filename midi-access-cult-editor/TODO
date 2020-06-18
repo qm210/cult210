@@ -11,7 +11,7 @@ ui:
 - curve function
 
 server:
-- save changes
+- save changes in tracks / e.g. channels there
 - persist current state to file (session_name.cult), autosave
 - load current state from file (session_name.cult)
 

@@ -6,13 +6,17 @@ import PianoRoll from './PianoRoll';
 import Selector from './Selector';
 import PlayBox from './PlayBox';
 import * as State from './state';
+import useLocalStorageState from './utils/useLocalStorageState';
 
 const MainFrame = (props) => <div className="mainframe" {...props}>{props.children}</div>;
 const SubFrame = (props) => <div className="subframe" {...props}>{props.children}</div>;;
-const Column = styled.div`display: flex; flex-direction:column;`
+const Column = styled.div`
+    display: flex;
+    flex-direction: column;
+`
 
 const App = () => {
-    const session = Recoil.useRecoilValue(State.session);
+    const [session] = useLocalStorageState('session', State.defaultSession);
     const setTracks = Recoil.useSetRecoilState(State.tracks);
     const setMidiStore = Recoil.useSetRecoilState(State.midiStore);
 

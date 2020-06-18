@@ -2,6 +2,7 @@ import React from 'react';
 import * as Recoil from 'recoil';
 import * as ReactDnd from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
+import useLocalStorageState from './utils/useLocalStorageState';
 import {geometry, RollDiv, KeyRow, Beat, Bar, Note, NoteType, PlayBar} from './components/PianoComponents';
 import {NOTES} from './utils/NoteUtils';
 import * as State from './state';
@@ -28,7 +29,7 @@ const Roll = (props) => {
 };
 
 const PianoRoll = () => {
-    const session = Recoil.useRecoilValue(State.session);
+    const [session] = useLocalStorageState('session', State.defaultSession);
     const latestTrack = Recoil.useRecoilValue(State.latestTrack);
     const [tracks, setTracks] = Recoil.useRecoilState(State.tracks);
     const [selectedTrackName, setSelectedTrackName] = Recoil.useRecoilState(State.selectedTrackName);
