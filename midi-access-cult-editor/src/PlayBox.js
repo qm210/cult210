@@ -34,10 +34,11 @@ const PlayBox = () => {
     //const activeTracks = Recoil.useRecoilValue(State.activeTracks); // throws that Batcher warning for some reason. TODO investigate later...
     const activeTracks = React.useMemo(() => tracks.filter(track => track.active), [tracks]);
     const msPerBeat = 6e4 / session.bpm;
-    const [timeZero, setTimeZero] = React.useState(0);
-    const [beatZero, setBeatZero] = React.useState(0);
+    const [zero, setZero] = React.useState({
+        time: 0,
+        beat: 0
+    });
     const trigger = React.useRef(false);
-    const [triggerFlag, setTriggerFlag] = React.useState(false);
 
     const webMidiRestart = React.useCallback(() => {
         WebMidi.disable();
@@ -54,68 +55,67 @@ const PlayBox = () => {
         webMidiRestart();
     }, [webMidiRestart]);
 
-    const notesToBuffer = React.useCallback((fromBeat) =>
+    const notesToBuffer = React.useCallback(() =>
         activeTracks.reduce((accTracks, track) => [
             ...accTracks,
             ...track.notes.reduce((accNotes, note) => {
-                if (note.start >= fromBeat && note.start < fromBeat + session.beatBuffer) {
+                if (note.start >= zero.beat && note.start < zero.beat + session.beatBuffer) {
                     accNotes.push({
                         ...note,
+                        start: note.start - zero.beat,
+                        pitch: note.pitch + 12 * track.transposeOctaves,
+                        channel: track.channel,
+                    })
+                }
+                else if (note.start + session.beats >= zero.beat && note.start + session.beats < zero.beat + session.beatBuffer) {
+                    accNotes.push({
+                        ...note,
+                        start: note.start + session.beats - zero.beat,
                         pitch: note.pitch + 12 * track.transposeOctaves,
                         channel: track.channel,
                     })
                 }
                 return accNotes;
             }, [])
-        ], []), [session.beatBuffer]);
+        ], []), [session.beats, session.beatBuffer, zero.beat, activeTracks]);
 
     const triggerPlayback = React.useCallback(() => {
-        activeTracks.forEach(track => {
-            track.notes.forEach(note => {
-                const notePitch = note.pitch + 12 * track.transposeOctaves;
-                if (notePitch < 0 || notePitch > 127) {
-                    console.warn(`can't play note ${notePitch}`);
-                } else {
-                    midiOut.playNote(notePitch, track.channel, {
-                        time: '+' + note.start * msPerBeat,
-                        duration: note.duration * msPerBeat,
-                        velocity: note.velocity
-                    })
-                }
-            })
+        notesToBuffer().forEach(note => {
+            if (note.pitch < 0 || note.pitch > 127) {
+                console.warn(`can't play note ${note.pitch}`);
+            } else {
+                midiOut.playNote(note.pitch, note.channel, {
+                    time: '+' + note.start * msPerBeat,
+                    duration: note.duration * msPerBeat,
+                    velocity: note.velocity
+                });
+            }
         });
-    }, [midiOut, msPerBeat, activeTracks]);
-
-    /*
-    React.useEffect(() => { // reset zime if anything "to play" changes..?
-        setTimeZero(WebMidi.time);
-    }, [msPerBeat, tracks]);
-    */
+    }, [midiOut, msPerBeat, notesToBuffer]);
 
     React.useEffect(() => {
-        console.log("gotcha!", playState.playing, trigger.current, triggerFlag);
+        console.log("ehm...", playState.playing, trigger.current)
         if (playState.playing && trigger.current) {
-            triggerPlayback(beatZero);
             trigger.current = false;
-            setTriggerFlag(false);
+            console.log("gotcha!", zero.beat, trigger.current);
+            triggerPlayback();
         }
-    }, [triggerPlayback, playState.playing, timeZero, beatZero, trigger, triggerFlag]);
+    }, [triggerPlayback, playState.playing, zero.beat]);
 
-    React.useEffect(() => {
-        console.log("RE!");
-        trigger.current = true;
-        setTriggerFlag(true);
-    }, [timeZero, setTriggerFlag]);
-
-    // how to use beatBuffer != beats ??
     const animationCallback = React.useCallback(msDelta => {
-        const beat = (WebMidi.time - timeZero) / msPerBeat;
+        const beatSinceZero = (WebMidi.time - zero.time) / msPerBeat;
+        const beat = (zero.beat + beatSinceZero) % session.beats;
         setPlayState(state => ({...state, beat}));
-        if (beat > session.beatBuffer) {
-            setBeatZero(beat);
-            setTimeZero(WebMidi.time);
+        console.log(zero.beat, beatSinceZero, beat, );
+        if (beatSinceZero > session.beatBuffer && !trigger.current) {
+            console.log(trigger.current, beat, "we set the flag to true")
+            trigger.current = true;
+            setZero({
+                beat: (zero.beat + session.beatBuffer) % session.beats,
+                time: WebMidi.time
+            })
         }
-    }, [setPlayState, setTimeZero, session.beats, timeZero, msPerBeat]);
+    }, [setPlayState, session.beats, session.beatBuffer, zero, setZero, msPerBeat]);
 
     useAnimationFrame(animationCallback, playState.playing);
 
@@ -125,16 +125,21 @@ const PlayBox = () => {
                 beat: session.resetOnStop ? 0 : state.beat,
                 playing: false
             }));
+            setZero(zero => ({...zero, beat: playState.beat}); // TODO: required??
             NOTES.forEach(note => midiOut.stopNote(note));
         }
         else {
-            setTimeZero(WebMidi.time);
+            trigger.current = true;
             setPlayState(state => ({
                 ...state,
                 playing: true,
             }));
+            setZero({
+                beat: playState.beat,
+                time: WebMidi.time
+            })
         }
-    }, [playState, setPlayState, session.resetOnStop, midiOut, setTimeZero]);
+    }, [playState, setPlayState, session.resetOnStop, midiOut, setZero, zero]);
 
     if (!midiOut) {
         return <h3>WebMidi not enabled yet.</h3>
@@ -178,7 +183,7 @@ const PlayBox = () => {
                 {playState.beat.toFixed(3)}
             </b>
         </div>
-        <DebugButton onClick={() => console.log(session, activeTracks, notesToBuffer(0))}/>
+        <DebugButton onClick={() => console.log(session, activeTracks, notesToBuffer())}/>
     </>;
 };
 
