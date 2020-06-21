@@ -135,7 +135,7 @@ const PlayBox = () => {
                 time: WebMidi.time
             })
         }
-    }, [playState, setPlayState, session.resetOnStop, midiOut, setZero, zero]);
+    }, [playState, setPlayState, session.resetOnStop, midiOut, setZero]);
 
     if (!midiOut) {
         return <h3>WebMidi not enabled yet.</h3>
@@ -163,8 +163,9 @@ const PlayBox = () => {
         </select>
 
         <button
-            disabled={midiOut == null}
-            onClick={PlayHandler}>
+            disabled = {midiOut == null}
+            onClick = {PlayHandler}
+            >
             {playState.playing ? "Stop" : "Play"}
         </button>
 

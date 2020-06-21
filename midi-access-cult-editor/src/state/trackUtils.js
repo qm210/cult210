@@ -5,7 +5,7 @@ export const getNotesFromFirstTrack = (data) => {
     const scaleTicks = ticks => +(ticks / data.header.ppq / 4).toFixed(3);
     console.log(data);
     return data.tracks[0].notes.map((note, index) => ({
-        id: `note${index}`,
+        id: index,
         pitch: note.midi,
         start: scaleTicks(note.ticks),
         duration: scaleTicks(note.durationTicks),
@@ -71,5 +71,32 @@ export const updateNote = (setTracks, trackName, noteUpdate) =>
                     notes: track.notes.map(note =>
                         note.id === noteUpdate.id ? noteUpdate : note
                     )}
+                : track
+    ));
+
+export const deleteNote = (setTracks, trackName, noteToDelete) =>
+    setTracks(tracks =>
+        tracks.map(track =>
+            track.name === trackName
+                ? {
+                    ...track,
+                    notes: track.notes.filter(note =>
+                        note.id !== noteToDelete.id
+                    )
+                }
+                : track
+    ));
+
+export const selectNote = (setTracks, trackName, noteToSelect) =>
+    setTracks(tracks =>
+        tracks.map(track =>
+            track.name === trackName
+                ? {
+                    ...track,
+                    notes: track.notes.map(note => ({
+                        ...note,
+                        selected: note.id === noteToSelect.id
+                    }))
+                }
                 : track
     ));

@@ -10,23 +10,27 @@ import * as State from './state';
 const quantX = 1/32;
 const quantY = 1;
 const quantize = (x, q) => Math.round(x/q) * q;
+const convertOffsetXToStart = (x, shift = 0) => Math.max(quantize(shift + x / geometry.beatWidth, quantX), 0);
+const convertOffsetYToPitch = (y, shift = 0) => quantize(shift - y / geometry.pianoHeight, quantY);
 
-const Roll = (props) => {
+const Roll = React.forwardRef((props, ref) => {
     const updateNote = props.updateNote;
     const [, drop] = ReactDnd.useDrop({
         accept: NoteType,
         drop: (note, monitor) => {
             const delta = monitor.getDifferenceFromInitialOffset();
-            note.start = Math.max(quantize(note.start + delta.x / geometry.beatWidth, quantX), 0);
-            note.pitch = quantize(note.pitch - delta.y / geometry.pianoHeight, quantY);
+            note.start = convertOffsetXToStart(delta.x, note.start);
+            note.pitch = convertOffsetYToPitch(delta.y, note.pitch);
             updateNote(note);
             return undefined
         }
     });
-    return <RollDiv ref={drop}>
-        {props.children}
-    </RollDiv>
-};
+    return <div ref={ref}>
+        <RollDiv ref={drop} {...props}>
+            {props.children}
+        </RollDiv>
+    </div>
+});
 
 const PianoRoll = () => {
     const [session] = useLocalStorageState('session', State.defaultSession);
@@ -34,7 +38,12 @@ const PianoRoll = () => {
     const [tracks, setTracks] = Recoil.useRecoilState(State.tracks);
     const [selectedTrackName, setSelectedTrackName] = Recoil.useRecoilState(State.selectedTrackName);
     const playState = Recoil.useRecoilValue(State.playState);
+    const [editor, setEditor] = React.useState({
+        nextNoteDuration: .25,
+    });
+    const scrollTop = React.useRef(0);
     const someCenterRef = React.useRef();
+    const rollRef = React.createRef();
 
     const barWidth = geometry.beatWidth / session.barsInBeat;
     const rowWidth = geometry.pianoWidth + session.beats * geometry.beatWidth;
@@ -45,23 +54,65 @@ const PianoRoll = () => {
         }
     }, [latestTrack]);
 
+    const leftClickOnNote = React.useCallback((event, track, note) => {
+        setSelectedTrackName(track.name);
+        State.selectNote(setTracks, track.name, note);
+        setEditor(state => ({
+            ...state,
+            nextNoteDuration: note.duration
+        }))
+    }, [setSelectedTrackName, setEditor, setTracks]);
+
+    const rightClickOnNote = React.useCallback((event, track, note) => {
+        event.preventDefault();
+        setSelectedTrackName(track.name);
+        State.deleteNote(setTracks, track.name, note);
+    }, [setSelectedTrackName, setTracks]);
+
+    const leftClickOutsideNote = React.useCallback((event) => {
+        const rectOfRoll = rollRef.current.getBoundingClientRect();
+        const noteStart = (event.clientX - rectOfRoll.left - geometry.pianoWidth) / geometry.beatWidth;
+        const notePitch = (event.clientY + rectOfRoll.top + scrollTop.current) / geometry.pianoHeight;
+        console.log('lel!', event, noteStart, notePitch);
+        //TODO: Get Right Window Scroll Position
+    }, [rollRef]);
+
+    const rightClickOutsideNote = React.useCallback((event) => {
+        event.preventDefault();
+    }, []);
+
+    const scrollRoll = (event) => {
+        scrollTop.current = event.target.scrollTop;
+//        console.log(event, event.target.scrollHeight, event.target.scrollTop, event.target.clientHeight)
+    }
+
     return <>
         <ReactDnd.DndProvider backend={HTML5Backend}>
-            <Roll updateNote={note => State.updateNote(setTracks, selectedTrackName, note)}>
+            <Roll
+                ref = {rollRef}
+                onScroll = {scrollRoll}
+                onClick = {event => leftClickOutsideNote(event)}
+                onContextMenu = {event => rightClickOutsideNote(event)}
+                updateNote = {note => State.updateNote(setTracks, selectedTrackName, note)}
+                >
                 {NOTES.slice().reverse().map((note, index) =>
                     <KeyRow
-                        key={index}
-                        note={note}
-                        width={rowWidth}
-                        someCenterRef={someCenterRef}
+                        key = {index}
+                        note = {note}
+                        width = {rowWidth}
+                        someCenterRef = {someCenterRef}
                     />
                 )}
                 {[...Array(session.beats).keys()].map((beat) =>
                     <Beat
-                        key={beat}
-                        index={beat}>
+                        key = {beat}
+                        index = {beat}>
                         {[...Array(session.barsInBeat).keys()].map((bar) =>
-                            <Bar key={bar} index={bar} width={barWidth}/>
+                            <Bar
+                                key = {bar}
+                                index = {bar}
+                                width = {barWidth}
+                            />
                         )}
                     </Beat>
                 )}
@@ -72,13 +123,22 @@ const PianoRoll = () => {
                             note={note}
                             color={track.hue}
                             trackSelected={track.name === selectedTrackName}
-                            onMouseDown={() => setSelectedTrackName(track.name)}
+                            onMouseDown={event => leftClickOnNote(event, track, note)}
+                            onContextMenu={event => rightClickOnNote(event, track, note)}
                         />
                     )
                 )}
                 {<PlayBar state={playState}/>}
             </Roll>
         </ReactDnd.DndProvider>
+        <div style={{marginTop: 10, color: 'black', fontWeight: 'bold'}}>
+            <span>
+                Ich hoffe, Ihrem Stuhl geht es gut!
+            </span>
+            <button>Naja... undo.</button>
+            <button>Store</button>
+            <button>Random</button>
+        </div>
     </>;
 };
 

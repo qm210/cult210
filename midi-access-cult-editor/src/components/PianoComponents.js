@@ -33,8 +33,14 @@ export const KeyRowDiv = styled.div`
 `
 
 export const KeyRow = ({note, width, someCenterRef}) =>
-    <KeyRowDiv black={isBlack(note)} width={width}>
-        <Key black={isBlack(note)} ref={note === 'A6' ? someCenterRef : null}>
+    <KeyRowDiv
+        black = {isBlack(note)}
+        width = {width}
+        >
+        <Key
+            black = {isBlack(note)}
+            ref = {note === 'A6' ? someCenterRef : null}
+            >
             {note}
         </Key>
     </KeyRowDiv>;
