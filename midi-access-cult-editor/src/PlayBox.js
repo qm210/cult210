@@ -94,7 +94,6 @@ const PlayBox = () => {
     }, [midiOut, msPerBeat, notesToBuffer]);
 
     React.useEffect(() => {
-        console.log("ehm...", playState.playing, trigger.current)
         if (playState.playing && trigger.current) {
             trigger.current = false;
             console.log("gotcha!", zero.beat, trigger.current);
@@ -106,9 +105,7 @@ const PlayBox = () => {
         const beatSinceZero = (WebMidi.time - zero.time) / msPerBeat;
         const beat = (zero.beat + beatSinceZero) % session.beats;
         setPlayState(state => ({...state, beat}));
-        console.log(zero.beat, beatSinceZero, beat, );
         if (beatSinceZero > session.beatBuffer && !trigger.current) {
-            console.log(trigger.current, beat, "we set the flag to true")
             trigger.current = true;
             setZero({
                 beat: (zero.beat + session.beatBuffer) % session.beats,
@@ -125,7 +122,6 @@ const PlayBox = () => {
                 beat: session.resetOnStop ? 0 : state.beat,
                 playing: false
             }));
-            setZero(zero => ({...zero, beat: playState.beat}); // TODO: required??
             NOTES.forEach(note => midiOut.stopNote(note));
         }
         else {
