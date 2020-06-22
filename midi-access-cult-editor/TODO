@@ -1,8 +1,9 @@
 general:
-- POC: trigger Beat every Beat?
--- first of all: buffer coming midi events in blocks
--- make not every change replay midi instantly - rethink
+- FIX THE GLITCH if changes in notes happen at the wrong TIME [clock never stopping]
+--- but first, add backend persistence to see whether this affects performance
 - how to stop midi..??
+--- check: https://webmidijs.org/forum/categories/support
+--- go via WEB MIDI API?
 -- read: https://www.html5rocks.com/en/tutorials/audio/scheduling/
 --- research weird Batcher / setState warning (Recoil)
 
@@ -20,6 +21,14 @@ server:
 future:
 - arrange patterns in tracks
 - save "versions" of patterns
+- strg + click (or something) for velocity
+- select rectangle of notes
+- select all (strg + A)
+- with selection...
+ --> move as block
+ --> move to other / new track
+- midi in (for clock), also, get trigger?
+- click in nonexisting track --> create new
 
 TIME VIEW:
 PAT1  [ | | |1||1||1|2|2| | | | | | | | ] --> channel? shift?
