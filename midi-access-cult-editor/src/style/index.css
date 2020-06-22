@@ -49,9 +49,29 @@ button:focus {
     outline: none;
 }
 
-select, option {
+select, option, input {
     font-size: 1rem;
     font-weight: bold;
     padding: 5px;
     margin: 5px;
+    border-radius: 6px;
+}
+
+button:disabled {
+    background-color: #9999;
+    border-color: #EEE;
+    color: #EEE;
+}
+
+.alert {
+    background-color: #A00B;
+    border-color: #B00;
+    color: #F80;
+}
+
+.debug {
+    background-color: #A21;
+    border-color: #FC0;
+    color: #FE0;
+    font-size: 1rem;
 }

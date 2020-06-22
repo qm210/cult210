@@ -31,7 +31,7 @@ const Selector = () => {
                     onChange={event => State.updateTrack(setTracks, track.name, {active: event.target.checked})}
                 />
                 <b>{track.name}</b>
-                <span style={{float: 'right'}}>
+                <span style={{float: 'right', top: -20}}>
                     oct <TransposeSpinBox
                         value={track.transposeOctaves}
                         onChange={event => State.updateTrack(setTracks, track.name, {transposeOctaves: event.target.value})}
@@ -59,7 +59,12 @@ const Selector = () => {
             </li>
         )}
         </ul>
-        <DebugButton onClick={() => console.log(JSON.stringify(activeTracks))}/>
+        <div>
+            <button className="alert" onClick={() => State.setTracksFromMidiStore(setTracks, midiStore)}>
+                    Re-Init
+            </button>
+            <DebugButton onClick={() => console.log(JSON.stringify(activeTracks))}/>
+        </div>
     </>
 };
 

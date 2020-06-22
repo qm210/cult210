@@ -68,7 +68,9 @@ export const updateNote = (setTracks, trackName, noteUpdate) =>
                 ? {
                     ...track,
                     notes: track.notes.map(note =>
-                        note.id === noteUpdate.id ? noteUpdate : note
+                        note.id === noteUpdate.id
+                        ? {...note, ...noteUpdate}
+                        : note
                     )}
                 : track
     ));

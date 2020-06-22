@@ -1,5 +1,4 @@
 import React from 'react';
-import styled from 'styled-components';
 
 export const LargeCheckBox = props =>
     <input type="checkbox" {...props} style={{
@@ -37,9 +36,6 @@ export const SpinBox = props =>
         }}
     />;
 
+export const TextInput = (props) => <input type="text" {...props}/>;
 
-export const RedButton = styled.button`
-    background-color: #800010;
-    font-size: 20;
-`
-export const DebugButton = (props) => <RedButton {...props}>DEBUG</RedButton>;
+export const DebugButton = (props) => <button className="debug" {...props}>DEBUG</button>;

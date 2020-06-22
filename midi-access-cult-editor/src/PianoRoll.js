@@ -4,6 +4,7 @@ import * as ReactDnd from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import useLocalStorageState from './utils/useLocalStorageState';
 import {geometry, RollDiv, KeyRow, Beat, Bar, Note, NoteType, PlayBar} from './components/PianoComponents';
+import {TextInput} from './components';
 import {NOTES} from './utils/NoteUtils';
 import * as State from './state';
 
@@ -37,17 +38,20 @@ const Roll = React.forwardRef((props, ref) => {
 });
 
 const PianoRoll = () => {
+    // Global State
     const [session] = useLocalStorageState('session', State.defaultSession);
     const latestTrack = Recoil.useRecoilValue(State.latestTrack);
     const [tracks, setTracks] = Recoil.useRecoilState(State.tracks);
     const [selectedTrackName, setSelectedTrackName] = Recoil.useRecoilState(State.selectedTrackName);
     const playState = Recoil.useRecoilValue(State.playState);
-    const [editor, setEditor] = React.useState({
-        nextNoteDuration: .25,
-    });
+
+    // Editor State
+    const [newTrackName, setNewTrackName] = React.useState("");
+    const [nextNoteDuration, setNextNoteDuration] = React.useState(.25);
+
     const scrollTop = React.useRef(0);
-    const someCenterRef = React.useRef();
     const rollRef = React.createRef();
+    const someCenterRef = React.createRef();
 
     const barWidth = geometry.beatWidth / session.barsInBeat;
     const rowWidth = geometry.pianoWidth + session.beats * geometry.beatWidth;
@@ -59,19 +63,44 @@ const PianoRoll = () => {
     }, [latestTrack]);
 
     const leftClickOnNote = React.useCallback((event, track, note) => {
+        if (event.button !== 0) {
+            return;
+        }
         setSelectedTrackName(track.name);
         State.selectNote(setTracks, track.name, note);
-        setEditor(state => ({
-            ...state,
-            nextNoteDuration: note.duration
-        }))
-    }, [setSelectedTrackName, setEditor, setTracks]);
+
+        let noteDuration = note.duration;
+        if (event.ctrlKey) {
+            event.preventDefault();
+            noteDuration += (event.shiftKey ? .25 : quantX);
+            State.updateNote(setTracks, track.name, {
+                id: note.id,
+                duration: noteDuration,
+            });
+        }
+        setNextNoteDuration(noteDuration);
+    }, [setSelectedTrackName, setTracks, setNextNoteDuration]);
 
     const rightClickOnNote = React.useCallback((event, track, note) => {
+        if (event.button !== 2) {
+            return;
+        }
         event.preventDefault();
         setSelectedTrackName(track.name);
-        State.deleteNote(setTracks, track.name, note);
-    }, [setSelectedTrackName, setTracks]);
+
+        let noteDuration = note.duration;
+        if (event.ctrlKey) {
+            noteDuration = Math.max(note.duration - (event.shiftKey ? .25 : quantX), quantX);
+            State.updateNote(setTracks, track.name, {
+                id: note.id,
+                duration: noteDuration
+            });
+            setNextNoteDuration(noteDuration);
+        }
+        else {
+            State.deleteNote(setTracks, track.name, note);
+        }
+    }, [setSelectedTrackName, setTracks, setNextNoteDuration]);
 
     const leftClickOutsideNote = React.useCallback((event) => {
         if (!selectedTrackName) {
@@ -82,17 +111,16 @@ const PianoRoll = () => {
             x: rectOfRoll.left + document.documentElement.scrollLeft + geometry.pianoWidth,
             y: scrollTop.current - rectOfRoll.top - document.documentElement.scrollTop
         }
-        const noteStart = convertOffsetXToStart(event.pageX - positionCorrection.x, -.5 * editor.nextNoteDuration, editor.nextNoteDuration);
+        const noteStart = convertOffsetXToStart(event.pageX - positionCorrection.x, -.5 * nextNoteDuration, nextNoteDuration);
         const notePitch = NOTES.length - convertOffsetYToPitch(-event.pageY - positionCorrection.y, 0.5);
         const newNote = State.addNote(setTracks, selectedTrackName, {
             start: noteStart,
             pitch: notePitch,
-            duration: editor.nextNoteDuration,
+            duration: nextNoteDuration,
             velocity: 0.5, // TODO
         });
         State.selectNote(setTracks, selectedTrackName, newNote);
-        console.log(newNote);
-    }, [rollRef, editor, selectedTrackName, setTracks]);
+    }, [rollRef, nextNoteDuration, selectedTrackName, setTracks]);
 
     const rightClickOutsideNote = React.useCallback((event) => {
         event.preventDefault();
@@ -100,8 +128,9 @@ const PianoRoll = () => {
 
     const scrollRoll = (event) => {
         scrollTop.current = event.target.scrollTop;
-//        console.log(event, event.target.scrollHeight, event.target.scrollTop, event.target.clientHeight)
     }
+
+    React.useEffect(() => setNewTrackName(selectedTrackName), [setNewTrackName, selectedTrackName]);
 
     return <>
         <ReactDnd.DndProvider backend={HTML5Backend}>
@@ -149,13 +178,40 @@ const PianoRoll = () => {
             </Roll>
         </ReactDnd.DndProvider>
         <div style={{marginTop: 10, color: 'black', fontWeight: 'bold'}}>
-            <span>
-                Ich hoffe, Ihrem Stuhl geht es gut!
+            <span style={{marginRight: 10}}>
+                Store:
             </span>
-            <button>Naja... undo.</button>
-            <button>Store</button>
-            <button>Random</button>
+            <TextInput
+                placeholder = 'pattern name'
+            />
+            <button>Store Pattern</button>
+            <button className="alert">
+                X Pattern
+            </button>
+            <TextInput
+                value = {newTrackName || ""}
+                onChange = {event => setNewTrackName(event.target.value)}
+                placeholder = 'track name'
+            />
+            <button>
+                --> new Track
+            </button>
+            <button className="alert">
+                X Track
+            </button>
         </div>
+        <div>
+        <span>
+                Control:
+            </span>
+            <button disabled={true}>
+                Undo.
+            </button>
+            <button disabled>
+                Random
+            </button>
+        </div>
+
     </>;
 };
 
