@@ -11,7 +11,6 @@ export const getNotesFromFirstTrack = (data) => {
         duration: scaleTicks(note.durationTicks),
         velocity: Math.max(0, Math.round(note.velocity * 100)/100),
         selected: index === 0,
-        playing: false,
     }));
 };
 
@@ -100,3 +99,23 @@ export const selectNote = (setTracks, trackName, noteToSelect) =>
                 }
                 : track
     ));
+
+export const addNote = (setTracks, trackName, notePrototype) => {
+    let resultingNote = null;
+    setTracks(tracks =>
+        tracks.map(track => {
+            if (track.name === trackName) {
+                resultingNote = {
+                    ...notePrototype,
+                    id: track.notes.length,
+                    selected: false,
+                };
+                return {
+                    ...track,
+                    notes: [...track.notes, resultingNote]
+                };
+            }
+            return track;
+        }));
+    return resultingNote;
+};

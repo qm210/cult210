@@ -10,8 +10,12 @@ import * as State from './state';
 const quantX = 1/32;
 const quantY = 1;
 const quantize = (x, q) => Math.round(x/q) * q;
-const convertOffsetXToStart = (x, shift = 0) => Math.max(quantize(shift + x / geometry.beatWidth, quantX), 0);
-const convertOffsetYToPitch = (y, shift = 0) => quantize(shift - y / geometry.pianoHeight, quantY);
+
+const convertOffsetXToStart = (x, shift = 0, quant = quantX) =>
+    Math.max(quantize(shift + x / geometry.beatWidth, quant), 0);
+
+const convertOffsetYToPitch = (y, shift = 0, quant = quantY) =>
+    quantize(shift - y / geometry.pianoHeight, quant);
 
 const Roll = React.forwardRef((props, ref) => {
     const updateNote = props.updateNote;
@@ -70,12 +74,25 @@ const PianoRoll = () => {
     }, [setSelectedTrackName, setTracks]);
 
     const leftClickOutsideNote = React.useCallback((event) => {
+        if (!selectedTrackName) {
+            return;
+        }
         const rectOfRoll = rollRef.current.getBoundingClientRect();
-        const noteStart = (event.clientX - rectOfRoll.left - geometry.pianoWidth) / geometry.beatWidth;
-        const notePitch = (event.clientY + rectOfRoll.top + scrollTop.current) / geometry.pianoHeight;
-        console.log('lel!', event, noteStart, notePitch);
-        //TODO: Get Right Window Scroll Position
-    }, [rollRef]);
+        const positionCorrection = {
+            x: rectOfRoll.left + document.documentElement.scrollLeft + geometry.pianoWidth,
+            y: scrollTop.current - rectOfRoll.top - document.documentElement.scrollTop
+        }
+        const noteStart = convertOffsetXToStart(event.pageX - positionCorrection.x, -.5 * editor.nextNoteDuration, editor.nextNoteDuration);
+        const notePitch = NOTES.length - convertOffsetYToPitch(-event.pageY - positionCorrection.y, 0.5);
+        const newNote = State.addNote(setTracks, selectedTrackName, {
+            start: noteStart,
+            pitch: notePitch,
+            duration: editor.nextNoteDuration,
+            velocity: 0.5, // TODO
+        });
+        State.selectNote(setTracks, selectedTrackName, newNote);
+        console.log(newNote);
+    }, [rollRef, editor, selectedTrackName, setTracks]);
 
     const rightClickOutsideNote = React.useCallback((event) => {
         event.preventDefault();
@@ -91,8 +108,6 @@ const PianoRoll = () => {
             <Roll
                 ref = {rollRef}
                 onScroll = {scrollRoll}
-                onClick = {event => leftClickOutsideNote(event)}
-                onContextMenu = {event => rightClickOutsideNote(event)}
                 updateNote = {note => State.updateNote(setTracks, selectedTrackName, note)}
                 >
                 {NOTES.slice().reverse().map((note, index) =>
@@ -112,6 +127,8 @@ const PianoRoll = () => {
                                 key = {bar}
                                 index = {bar}
                                 width = {barWidth}
+                                onClick = {event => leftClickOutsideNote(event)}
+                                onContextMenu = {event => rightClickOutsideNote(event)}
                             />
                         )}
                     </Beat>
