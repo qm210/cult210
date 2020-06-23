@@ -45,13 +45,21 @@ const PianoRoll = () => {
     const [selectedTrackName, setSelectedTrackName] = Recoil.useRecoilState(State.selectedTrackName);
     const playState = Recoil.useRecoilValue(State.playState);
 
+    // Derived from Global State (Recoil Selectors are Shitty Fucks)
+    const selectedTrack = React.useMemo(() =>
+        tracks.find(track => track.name === selectedTrackName)
+    , [tracks, selectedTrackName]);
+
     // Editor State
     const [newTrackName, setNewTrackName] = React.useState("");
+    const [newPatternName, setNewPatternName] = React.useState("");
     const [nextNoteDuration, setNextNoteDuration] = React.useState(.25);
+    const [originalPattern, setOriginalPattern] = React.useState([]);
 
+    const untouched = React.useRef(true);
     const scrollTop = React.useRef(0);
     const rollRef = React.createRef();
-    const someCenterRef = React.createRef();
+    const someCenterRef = React.useRef();
 
     const barWidth = geometry.beatWidth / session.barsInBeat;
     const rowWidth = geometry.pianoWidth + session.beats * geometry.beatWidth;
@@ -72,6 +80,7 @@ const PianoRoll = () => {
         let noteDuration = note.duration;
         if (event.ctrlKey) {
             event.preventDefault();
+            untouched.current = false;
             noteDuration += (event.shiftKey ? .25 : quantX);
             State.updateNote(setTracks, track.name, {
                 id: note.id,
@@ -90,6 +99,7 @@ const PianoRoll = () => {
 
         let noteDuration = note.duration;
         if (event.ctrlKey) {
+            untouched.current = false;
             noteDuration = Math.max(note.duration - (event.shiftKey ? .25 : quantX), quantX);
             State.updateNote(setTracks, track.name, {
                 id: note.id,
@@ -98,6 +108,7 @@ const PianoRoll = () => {
             setNextNoteDuration(noteDuration);
         }
         else {
+            untouched.current = false;
             State.deleteNote(setTracks, track.name, note);
         }
     }, [setSelectedTrackName, setTracks, setNextNoteDuration]);
@@ -106,6 +117,7 @@ const PianoRoll = () => {
         if (!selectedTrackName) {
             return;
         }
+        untouched.current = false;
         const rectOfRoll = rollRef.current.getBoundingClientRect();
         const positionCorrection = {
             x: rectOfRoll.left + document.documentElement.scrollLeft + geometry.pianoWidth,
@@ -130,15 +142,25 @@ const PianoRoll = () => {
         scrollTop.current = event.target.scrollTop;
     }
 
-    React.useEffect(() => setNewTrackName(selectedTrackName), [setNewTrackName, selectedTrackName]);
+    React.useEffect(() => {
+        if (selectedTrackName == null) {
+            return;
+        }
+        untouched.current = true;
+        setOriginalPattern(selectedTrack.notes);
+        setNewTrackName(selectedTrackName);
+        setNewPatternName(selectedTrack.selectedPattern);
+    }, [selectedTrackName, selectedTrack]); // TODO: exhausive deps?
 
     return <>
         <ReactDnd.DndProvider backend={HTML5Backend}>
             <Roll
                 ref = {rollRef}
                 onScroll = {scrollRoll}
-                updateNote = {note => State.updateNote(setTracks, selectedTrackName, note)}
-                >
+                updateNote = {note => {
+                    untouched.current = false;
+                    State.updateNote(setTracks, selectedTrackName, note);
+                }}>
                 {NOTES.slice().reverse().map((note, index) =>
                     <KeyRow
                         key = {index}
@@ -183,15 +205,17 @@ const PianoRoll = () => {
             </span>
             <TextInput
                 placeholder = 'pattern name'
+                value = {newPatternName || ""}
+                onChange = {event => setNewPatternName(event.target.value)}
             />
             <button>Store Pattern</button>
             <button className="alert">
                 X Pattern
             </button>
             <TextInput
+                placeholder = 'track name'
                 value = {newTrackName || ""}
                 onChange = {event => setNewTrackName(event.target.value)}
-                placeholder = 'track name'
             />
             <button>
                 --> new Track
@@ -199,6 +223,11 @@ const PianoRoll = () => {
             <button className="alert">
                 X Track
             </button>
+            <span>
+                {
+                    untouched.current ? null : 'modified'
+                }
+            </span>
         </div>
         <div>
         <span>

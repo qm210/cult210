@@ -24,6 +24,13 @@ export const selectedTrackName = Recoil.atom({
     default: null,
 });
 
+export const selectedTrack = Recoil.selector({
+    key: 'selectedTrack',
+    get: ({get}) => get(tracks).find(track =>
+        track.name === get(selectedTrackName)
+    )
+})
+
 export const latestTrack = Recoil.atom({
     key: 'latestTrack',
     default: {

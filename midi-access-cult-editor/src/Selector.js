@@ -23,12 +23,14 @@ const Selector = () => {
     };
 
     return <>
-        <ul>
         {tracks.map((track, index) =>
-            <li key={index}>
+            <div key={index}>
                 <LargeCheckBox
-                    checked={track.active}
-                    onChange={event => State.updateTrack(setTracks, track.name, {active: event.target.checked})}
+                    checked = {track.active}
+                    onChange = {event => State.updateTrack(setTracks, track.name, {active: event.target.checked})}
+                    style = {{
+                        marginTop: 10
+                    }}
                 />
                 <b>{track.name}</b>
                 <span style={{float: 'right', top: -20}}>
@@ -42,23 +44,33 @@ const Selector = () => {
                     />
                 </span>
                 <div>
-                    {midiStore[track.name]
-                        ? midiStore[track.name].map((midi, mIndex) =>
-                            <button key={mIndex}
-                                onClick={() => loadTrackFromMidi(midi)}
-                                style={{
-                                    backgroundColor: track.active ? "purple" : "gray",
-                                    borderColor: midi.title === track.selectedPattern ? "red" : "white"
-                                }}
-                                >
-                                {midi.title}
-                            </button>)
-                        : "empty"
-                    }
+                    <select
+                        id = {`${track.name}-pattern`}
+                        size = {2}
+                        style = {{
+                            width: '100%',
+                        }}
+                        >
+                        {midiStore[track.name]
+                            ? midiStore[track.name].map((midi, mIndex) =>
+                                <option
+                                    key = {mIndex}
+                                    onClick = {() => loadTrackFromMidi(midi)}
+                                    defaultValue = {mIndex === midiStore[track.name].length - 1} // TODO: unfinished, whatever I intended to do here
+                                    style = {{
+                                        backgroundColor: track.active ? "purple" : "gray",
+                                        borderColor: midi.title === track.selectedPattern ? "red" : "white",
+                                        fontSize: '.8rem'
+                                    }}
+                                    >
+                                    {midi.title}
+                                </option>)
+                            : "empty"
+                        }
+                    </select>
                 </div>
-            </li>
+            </div>
         )}
-        </ul>
         <div>
             <button className="alert" onClick={() => State.setTracksFromMidiStore(setTracks, midiStore)}>
                     Re-Init

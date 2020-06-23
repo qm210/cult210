@@ -3,7 +3,6 @@ export const getNotesFromFirstTrack = (data) => {
         return [];
     }
     const scaleTicks = ticks => +(ticks / data.header.ppq / 4).toFixed(3);
-    console.log(data);
     return data.tracks[0].notes.map((note, index) => ({
         id: index,
         pitch: note.midi,

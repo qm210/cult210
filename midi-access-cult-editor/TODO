@@ -10,6 +10,7 @@ general:
 ui:
 - edit note length
 - curve function
+- react-select for Track/Pattern Selector
 
 server:
 - save changes in tracks / e.g. channels there
