@@ -120,3 +120,21 @@ export const addNote = (setTracks, trackName, notePrototype) => {
         }));
     return resultingNote;
 };
+
+export const storePattern = (setTracks, trackName, newPatternName, originalPattern) => {
+    // DO nothing because this would affect midi store...
+}
+
+/*
+in current track:
+- store pattern in same track as new pattern
+- restore original pattern in this track from original pattern
+*/
+
+/*
+Rearrange: MIDI STORE has Database which are sets of patterns. They have "label" but these are not "tracks".
+Later on: You can fetch them as you wish...
+
+Tracks for now: List of Separate Players, each has its own pattern
+Later on: Tracks have Song Arranger, can build build up / more complex loops
+*/

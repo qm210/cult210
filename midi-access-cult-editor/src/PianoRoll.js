@@ -6,6 +6,7 @@ import useLocalStorageState from './utils/useLocalStorageState';
 import {geometry, RollDiv, KeyRow, Beat, Bar, Note, NoteType, PlayBar} from './components/PianoComponents';
 import {TextInput} from './components';
 import {NOTES} from './utils/NoteUtils';
+import {equalJson} from './utils/helpers';
 import * as State from './state';
 
 const quantX = 1/32;
@@ -45,21 +46,20 @@ const PianoRoll = () => {
     const [selectedTrackName, setSelectedTrackName] = Recoil.useRecoilState(State.selectedTrackName);
     const playState = Recoil.useRecoilValue(State.playState);
 
-    // Derived from Global State (Recoil Selectors are Shitty Fucks)
-    const selectedTrack = React.useMemo(() =>
-        tracks.find(track => track.name === selectedTrackName)
-    , [tracks, selectedTrackName]);
-
     // Editor State
     const [newTrackName, setNewTrackName] = React.useState("");
     const [newPatternName, setNewPatternName] = React.useState("");
     const [nextNoteDuration, setNextNoteDuration] = React.useState(.25);
     const [originalPattern, setOriginalPattern] = React.useState([]);
 
-    const untouched = React.useRef(true);
     const scrollTop = React.useRef(0);
     const rollRef = React.createRef();
     const someCenterRef = React.useRef();
+
+    // Derived (btw: Recoil Selectors are Shitty Fucks)
+    const selectedTrack = React.useMemo(() =>
+        tracks.find(track => track.name === selectedTrackName)
+    , [tracks, selectedTrackName]);
 
     const barWidth = geometry.beatWidth / session.barsInBeat;
     const rowWidth = geometry.pianoWidth + session.beats * geometry.beatWidth;
@@ -80,7 +80,6 @@ const PianoRoll = () => {
         let noteDuration = note.duration;
         if (event.ctrlKey) {
             event.preventDefault();
-            untouched.current = false;
             noteDuration += (event.shiftKey ? .25 : quantX);
             State.updateNote(setTracks, track.name, {
                 id: note.id,
@@ -99,7 +98,6 @@ const PianoRoll = () => {
 
         let noteDuration = note.duration;
         if (event.ctrlKey) {
-            untouched.current = false;
             noteDuration = Math.max(note.duration - (event.shiftKey ? .25 : quantX), quantX);
             State.updateNote(setTracks, track.name, {
                 id: note.id,
@@ -108,7 +106,6 @@ const PianoRoll = () => {
             setNextNoteDuration(noteDuration);
         }
         else {
-            untouched.current = false;
             State.deleteNote(setTracks, track.name, note);
         }
     }, [setSelectedTrackName, setTracks, setNextNoteDuration]);
@@ -117,7 +114,6 @@ const PianoRoll = () => {
         if (!selectedTrackName) {
             return;
         }
-        untouched.current = false;
         const rectOfRoll = rollRef.current.getBoundingClientRect();
         const positionCorrection = {
             x: rectOfRoll.left + document.documentElement.scrollLeft + geometry.pianoWidth,
@@ -146,8 +142,7 @@ const PianoRoll = () => {
         if (selectedTrackName == null) {
             return;
         }
-        untouched.current = true;
-        setOriginalPattern(selectedTrack.notes);
+        setOriginalPattern([...selectedTrack.notes]);
         setNewTrackName(selectedTrackName);
         setNewPatternName(selectedTrack.selectedPattern);
     }, [selectedTrackName, selectedTrack]); // TODO: exhausive deps?
@@ -158,7 +153,6 @@ const PianoRoll = () => {
                 ref = {rollRef}
                 onScroll = {scrollRoll}
                 updateNote = {note => {
-                    untouched.current = false;
                     State.updateNote(setTracks, selectedTrackName, note);
                 }}>
                 {NOTES.slice().reverse().map((note, index) =>
@@ -208,7 +202,11 @@ const PianoRoll = () => {
                 value = {newPatternName || ""}
                 onChange = {event => setNewPatternName(event.target.value)}
             />
-            <button>Store Pattern</button>
+            <button
+                onClick = {() => State.storePattern(setTracks, selectedTrackName, newPatternName, originalPattern)}
+                >
+                Store Pattern
+            </button>
             <button className="alert">
                 X Pattern
             </button>
@@ -225,7 +223,7 @@ const PianoRoll = () => {
             </button>
             <span>
                 {
-                    untouched.current ? null : 'modified'
+                    //equalJson(selectedTrack.notes, originalPattern) ? null : 'modified'
                 }
             </span>
         </div>

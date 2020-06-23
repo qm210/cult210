@@ -32,13 +32,18 @@ const Selector = () => {
                         marginTop: 10
                     }}
                 />
-                <b>{track.name}</b>
+                <span style={{
+                    fontWeight: 'bold',
+                    marginRight: 50
+                    }}>
+                    {track.name}
+                </span>
                 <span style={{float: 'right', top: -20}}>
                     oct <TransposeSpinBox
                         value={track.transposeOctaves}
                         onChange={event => State.updateTrack(setTracks, track.name, {transposeOctaves: event.target.value})}
                     />
-                    channel <ChannelSpinBox
+                    CH <ChannelSpinBox
                         value={track.channel}
                         onChange={event => State.updateTrack(setTracks, track.name, {channel: event.target.value})}
                     />

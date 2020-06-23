@@ -1,3 +1,8 @@
+next:
+- store Pattern, delete Pattern -- simple func, but KEEP IN MIND; WE CHANGE THE STUFF ANYWAYS (Large list of Patterns)
+- persist to server
+- then fix glitch in playback, if possible..??
+
 general:
 - FIX THE GLITCH if changes in notes happen at the wrong TIME [clock never stopping]
 --- but first, add backend persistence to see whether this affects performance
@@ -8,9 +13,10 @@ general:
 --- research weird Batcher / setState warning (Recoil)
 
 ui:
-- edit note length
 - curve function
 - react-select for Track/Pattern Selector
+- "new pattern" mode
+- piano: each used key is slightly off colored -- for more consistent shit ;)
 
 server:
 - save changes in tracks / e.g. channels there
