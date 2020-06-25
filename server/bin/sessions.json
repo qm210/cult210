@@ -1,0 +1,39 @@
+[
+    {
+        "title": "test",
+        "header": {
+            "bpm": 42,
+            "beats": 4,
+            "barsInBeat": 4,
+            "resetOnStop": true,
+            "beatBuffer": 1
+        },
+        "selectedTrackName": "bassey",
+        "tracks" : [
+            {
+                "name": "leady",
+                "active": true,
+                "selectedPattern": "fest",
+                "notes": null,
+                "hue": 188,
+                "channel": 2
+            }, {
+                "name": "bassey",
+                "active": true,
+                "selectedPattern": "polizei",
+                "notes": null,
+                "hue": 142,
+                "channel": 2,
+                "transposeOctaves": "1"
+            }, {
+                "name": "sick boi",
+                "active": false,
+                "selectedPattern": null,
+                "notes": null,
+                "hue": 321,
+                "channel": 1,
+                "transposeOctaves": "0"
+            }
+        ]
+    }
+]

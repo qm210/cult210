@@ -17,12 +17,18 @@ export const newTrack = (name) => ({
     name,
     active: false,
     selectedPattern: null,
-    patterns: [], // unused yet
     notes: [],
     hue: Math.floor(360 * Math.random()),
     channel: 1,
     transposeOctaves: 0,
 });
+
+// this is a kind of ad-hoc migration...
+export const sanitizeTracks = (tracks) =>
+    (tracks || []).map(track => ({
+        ...newTrack(null),
+        ...track
+    }));
 
 export const setTracksFromMidiStore = (setTracks, payload) =>
     setTracks(tracks => {

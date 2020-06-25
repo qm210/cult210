@@ -31,15 +31,6 @@ export const selectedTrack = Recoil.selector({
     )
 })
 
-export const latestTrack = Recoil.atom({
-    key: 'latestTrack',
-    default: {
-        title: null,
-        filename: null,
-        type: null,
-        data: {}
-}});
-
 export const midiStore = Recoil.atom({
     key: 'midiStore',
     default: []

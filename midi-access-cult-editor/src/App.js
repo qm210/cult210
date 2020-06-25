@@ -3,7 +3,7 @@ import * as Recoil from 'recoil';
 import styled from 'styled-components'
 import { fetchPromise } from "./utils/fetchPromise";
 import PianoRoll from './PianoRoll';
-import Selector from './Selector';
+import SessionPanel from './SessionPanel';
 import PlayBox from './PlayBox';
 import * as State from './state';
 import useLocalStorageState from './utils/useLocalStorageState';
@@ -16,22 +16,28 @@ const Column = styled.div`
 `
 
 const App = () => {
-    const [session] = useLocalStorageState('session', State.defaultSession);
+    const [session, setSession] = useLocalStorageState('session', State.defaultSession);
     const setTracks = Recoil.useSetRecoilState(State.tracks);
     const setMidiStore = Recoil.useSetRecoilState(State.midiStore);
+    const setSelectedTrackName = Recoil.useSetRecoilState(State.selectedTrackName);
 
-    const setTracksFromMidiStore = React.useCallback(data =>
-        State.setTracksFromMidiStore(setTracks, data)
-    , [setTracks]);
+    const setSanitizedState = React.useCallback((session) => {
+        console.log(session);
+        setTracks(State.sanitizeTracks(session.tracks));
+        setSession(session.header);
+        setSelectedTrackName(session.selectedTrackName);
+    }, [setSession, setTracks, setSelectedTrackName])
+
+    React.useEffect(() => {
+        fetchPromise('/midis/')
+            .then(data => setMidiStore(data));
+        fetchPromise('/sessions')
+            .then(data => setSanitizedState(data[0]));
+    }, [setMidiStore, setSanitizedState]);
 
     React.useEffect(() => {
         document.title = "Cult210: " + session.title;
-        fetchPromise('/midis/')
-            .then(data => {
-                setMidiStore(data);
-                setTracksFromMidiStore(data);
-            });
-    }, [session.title, setMidiStore, setTracksFromMidiStore]); //TODO: check whether useCallback required
+    }, [session.title])
 
     return <>
         <MainFrame>
@@ -40,7 +46,7 @@ const App = () => {
             </SubFrame>
             <Column>
                 <SubFrame>
-                    <Selector/>
+                    <SessionPanel/>
                 </SubFrame>
                 <SubFrame>
                     <PlayBox/>

@@ -39,3 +39,5 @@ export const SpinBox = props =>
 export const TextInput = (props) => <input type="text" {...props}/>;
 
 export const DebugButton = (props) => <button className="debug" {...props}>DEBUG</button>;
+
+export const ListButton = (props) => <button className="list-button" {...props}>{props.children}</button>;

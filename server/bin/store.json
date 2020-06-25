@@ -1,0 +1,34 @@
+[
+    {
+        "id": 0,
+        "title": "test",
+        "track": "lead",
+        "filename": "miditest_lead1.mid",
+        "beats": 4
+    }, {
+        "id": 1,
+        "title": "pest",
+        "track": "lead",
+        "filename": "miditest_lead2.mid"
+    }, {
+        "id": 2,
+        "title": "fest",
+        "track": "lead",
+        "filename": "miditest_lead3.mid"
+    }, {
+        "id": 3,
+        "title": "eins",
+        "track": "bass",
+        "filename": "miditest_bass1.mid"
+    }, {
+        "id": 4,
+        "title": "zwei",
+        "track": "bass",
+        "filename": "miditest_bass2.mid"
+    }, {
+        "id": 5,
+        "title": "polizei",
+        "track": "bass",
+        "filename": "miditest_bass3.mid"
+    }
+]

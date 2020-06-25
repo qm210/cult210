@@ -30,6 +30,16 @@ code {
     flex-direction: column;
 }
 
+.list-button {
+    margin: 0px;
+    padding: 3px;
+    border-color: #808;
+    border-radius: 3px;
+    font-weight: normal;
+    width: 100%;
+    text-align: left;
+}
+
 button {
     border: 2px solid #FFF;
     padding: 10px;

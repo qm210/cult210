@@ -6,7 +6,6 @@ import useLocalStorageState from './utils/useLocalStorageState';
 import {geometry, RollDiv, KeyRow, Beat, Bar, Note, NoteType, PlayBar} from './components/PianoComponents';
 import {TextInput} from './components';
 import {NOTES} from './utils/NoteUtils';
-import {equalJson} from './utils/helpers';
 import * as State from './state';
 
 const quantX = 1/32;
@@ -41,7 +40,6 @@ const Roll = React.forwardRef((props, ref) => {
 const PianoRoll = () => {
     // Global State
     const [session] = useLocalStorageState('session', State.defaultSession);
-    const latestTrack = Recoil.useRecoilValue(State.latestTrack);
     const [tracks, setTracks] = Recoil.useRecoilState(State.tracks);
     const [selectedTrackName, setSelectedTrackName] = Recoil.useRecoilState(State.selectedTrackName);
     const playState = Recoil.useRecoilValue(State.playState);
@@ -68,7 +66,7 @@ const PianoRoll = () => {
         if (someCenterRef.current) {
             someCenterRef.current.scrollIntoView({behavior: 'smooth'});
         }
-    }, [latestTrack]);
+    }, [tracks]);
 
     const leftClickOnNote = React.useCallback((event, track, note) => {
         if (event.button !== 0) {
@@ -139,13 +137,20 @@ const PianoRoll = () => {
     }
 
     React.useEffect(() => {
-        if (selectedTrackName == null) {
+        if (selectedTrackName == null || selectedTrack == null) {
             return;
         }
-        setOriginalPattern([...selectedTrack.notes]);
+        console.log("WHAT", selectedTrackName, selectedTrack)
+        setOriginalPattern([...(selectedTrack.notes || [])]);
         setNewTrackName(selectedTrackName);
         setNewPatternName(selectedTrack.selectedPattern);
     }, [selectedTrackName, selectedTrack]); // TODO: exhausive deps?
+
+    const sessionLoaded = (!!session) && (!!tracks) && (!!selectedTrackName)
+    if (!sessionLoaded) {
+        return <div>Loading Session...</div>;
+    }
+
 
     return <>
         <ReactDnd.DndProvider backend={HTML5Backend}>
@@ -155,15 +160,15 @@ const PianoRoll = () => {
                 updateNote = {note => {
                     State.updateNote(setTracks, selectedTrackName, note);
                 }}>
-                {NOTES.slice().reverse().map((note, index) =>
+                {/*NOTES.slice().reverse().map((note, index) =>
                     <KeyRow
                         key = {index}
                         note = {note}
                         width = {rowWidth}
                         someCenterRef = {someCenterRef}
                     />
-                )}
-                {[...Array(session.beats).keys()].map((beat) =>
+                )*/}
+                {/*[...Array(session.beats).keys()].map((beat) =>
                     <Beat
                         key = {beat}
                         index = {beat}>
@@ -177,8 +182,8 @@ const PianoRoll = () => {
                             />
                         )}
                     </Beat>
-                )}
-                {tracks.filter(track => track.active).map(track =>
+                        )*/}
+                {/*tracks.filter(track => track.active).map(track =>
                     track.notes.map((note, index) =>
                         <Note
                             key={index}
@@ -189,7 +194,7 @@ const PianoRoll = () => {
                             onContextMenu={event => rightClickOnNote(event, track, note)}
                         />
                     )
-                )}
+                )*/}
                 {<PlayBar state={playState}/>}
             </Roll>
         </ReactDnd.DndProvider>

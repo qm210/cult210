@@ -80,7 +80,7 @@ const Selector = () => {
             <button className="alert" onClick={() => State.setTracksFromMidiStore(setTracks, midiStore)}>
                     Re-Init
             </button>
-            <DebugButton onClick={() => console.log(JSON.stringify(activeTracks))}/>
+            <DebugButton onClick={() => console.log(midiStore)}/>
         </div>
     </>
 };

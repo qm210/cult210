@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', require('./routes/index'));
 app.use('/midis/', require('./routes/midis'));
-app.use('/tracks/', require('./routes/tracks'));
+app.use('/sessions', require('./routes/sessions'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
